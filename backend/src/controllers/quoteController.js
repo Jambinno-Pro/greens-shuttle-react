@@ -52,3 +52,25 @@ export const createQuote = (req, res) => {
     });
   }
 };
+
+export const getQuotes = (req, res) => {
+  try {
+    if (!fs.existsSync(quotesFile)) {
+      fs.writeFileSync(quotesFile, "[]");
+    }
+
+    const quotes = JSON.parse(fs.readFileSync(quotesFile, "utf8"));
+
+    res.json({
+      success: true,
+      quotes,
+    });
+  } catch (error) {
+    console.error("Get quotes error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Unable to load quote requests.",
+    });
+  }
+};

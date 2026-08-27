@@ -55,3 +55,25 @@ export const createContact = (req, res) => {
     });
   }
 };
+
+export const getContacts = (req, res) => {
+  try {
+    if (!fs.existsSync(contactsFile)) {
+      fs.writeFileSync(contactsFile, "[]");
+    }
+
+    const contacts = JSON.parse(fs.readFileSync(contactsFile, "utf8"));
+
+    res.json({
+      success: true,
+      contacts,
+    });
+  } catch (error) {
+    console.error("Get contacts error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Unable to load contact enquiries.",
+    });
+  }
+};

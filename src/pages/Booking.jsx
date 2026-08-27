@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import './Booking.css';
 
+const API_URL = 'http://localhost:5000';
+
 export default function Booking() {
   const [formData, setFormData] = useState({
     name: '',
@@ -15,11 +17,17 @@ export default function Booking() {
     message: '',
   });
 
+  const [proofFile, setProofFile] = useState(null);
+
   const [status, setStatus] = useState({
     loading: false,
     success: '',
     error: '',
   });
+
+  /* =========================================================
+     HANDLE TEXT / SELECT / DATE / TIME CHANGES
+  ========================================================= */
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -29,6 +37,26 @@ export default function Booking() {
       [name]: value,
     }));
   };
+
+  /* =========================================================
+     HANDLE PROOF FILE
+  ========================================================= */
+
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0] || null;
+
+    setProofFile(file);
+
+    setStatus({
+      loading: false,
+      success: '',
+      error: '',
+    });
+  };
+
+  /* =========================================================
+     SUBMIT BOOKING
+  ========================================================= */
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -40,12 +68,41 @@ export default function Booking() {
     });
 
     try {
-      const response = await fetch('http://localhost:5000/api/bookings', {
+      /* =====================================================
+         CREATE FORMDATA
+
+         We use FormData because the booking can contain
+         an uploaded proof document.
+      ===================================================== */
+
+      const bookingData = new FormData();
+
+      bookingData.append('name', formData.name);
+      bookingData.append('email', formData.email);
+      bookingData.append('phone', formData.phone);
+      bookingData.append('passengers', formData.passengers);
+      bookingData.append('pickup', formData.pickup);
+      bookingData.append('destination', formData.destination);
+      bookingData.append('travelDate', formData.travelDate);
+      bookingData.append('travelTime', formData.travelTime);
+      bookingData.append('service', formData.service);
+      bookingData.append('message', formData.message);
+
+      /* =====================================================
+         ADD PROOF FILE IF SELECTED
+      ===================================================== */
+
+      if (proofFile) {
+        bookingData.append('proofOfBooking', proofFile);
+      }
+
+      /* =====================================================
+         SEND BOOKING
+      ===================================================== */
+
+      const response = await fetch(`${API_URL}/api/bookings`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
+        body: bookingData,
       });
 
       const data = await response.json();
@@ -56,13 +113,20 @@ export default function Booking() {
 
       console.log('BOOKING SUBMITTED:', data);
 
+      /* =====================================================
+         SUCCESS
+      ===================================================== */
+
       setStatus({
         loading: false,
         success: data.message || 'Booking request submitted successfully.',
         error: '',
       });
 
-      // Reset form
+      /* =====================================================
+         RESET FORM
+      ===================================================== */
+
       setFormData({
         name: '',
         email: '',
@@ -75,6 +139,20 @@ export default function Booking() {
         service: '',
         message: '',
       });
+
+      /* =====================================================
+         RESET FILE
+      ===================================================== */
+
+      setProofFile(null);
+
+      /*
+        Reset the actual file input.
+        We use the form element so the selected filename
+        disappears from the browser input as well.
+      */
+
+      e.target.reset();
     } catch (error) {
       console.error('Booking submission error:', error);
 
@@ -149,7 +227,11 @@ export default function Booking() {
               FORM
           ================================================= */}
 
-          <form className="journey-booking-form" onSubmit={handleSubmit}>
+          <form
+            className="journey-booking-form"
+            onSubmit={handleSubmit}
+            encType="multipart/form-data"
+          >
             {/* =================================================
                 PERSONAL DETAILS
             ================================================= */}
@@ -159,12 +241,14 @@ export default function Booking() {
 
               <div>
                 <h3>Your details</h3>
+
                 <p>Tell us how we can contact you.</p>
               </div>
             </div>
 
             <div className="journey-booking-fields">
               {/* NAME */}
+
               <div className="journey-booking-field">
                 <label htmlFor="journey-full-name">Full Name</label>
 
@@ -180,6 +264,7 @@ export default function Booking() {
               </div>
 
               {/* EMAIL */}
+
               <div className="journey-booking-field">
                 <label htmlFor="journey-email">Email Address</label>
 
@@ -195,6 +280,7 @@ export default function Booking() {
               </div>
 
               {/* PHONE */}
+
               <div className="journey-booking-field">
                 <label htmlFor="journey-phone">Contact Number</label>
 
@@ -210,6 +296,7 @@ export default function Booking() {
               </div>
 
               {/* PASSENGERS */}
+
               <div className="journey-booking-field">
                 <label htmlFor="journey-passengers">Number of Passengers</label>
 
@@ -235,12 +322,14 @@ export default function Booking() {
 
               <div>
                 <h3>Journey details</h3>
+
                 <p>Tell us about your trip.</p>
               </div>
             </div>
 
             <div className="journey-booking-fields">
               {/* PICKUP */}
+
               <div className="journey-booking-field">
                 <label htmlFor="journey-pickup">Pickup Location</label>
 
@@ -256,6 +345,7 @@ export default function Booking() {
               </div>
 
               {/* DESTINATION */}
+
               <div className="journey-booking-field">
                 <label htmlFor="journey-destination">Destination</label>
 
@@ -271,6 +361,7 @@ export default function Booking() {
               </div>
 
               {/* DATE */}
+
               <div className="journey-booking-field">
                 <label htmlFor="journey-date">Travel Date</label>
 
@@ -285,6 +376,7 @@ export default function Booking() {
               </div>
 
               {/* TIME */}
+
               <div className="journey-booking-field">
                 <label htmlFor="journey-time">Pickup Time</label>
 
@@ -299,6 +391,7 @@ export default function Booking() {
               </div>
 
               {/* SERVICE */}
+
               <div className="journey-booking-field journey-booking-field-wide">
                 <label htmlFor="journey-service">Service Required</label>
 
@@ -333,11 +426,49 @@ export default function Booking() {
             </div>
 
             {/* =================================================
-                ADDITIONAL INFORMATION
+                PROOF OF BOOKING / PAYMENT
             ================================================= */}
 
             <div className="journey-booking-form-title">
               <span>03</span>
+
+              <div>
+                <h3>Proof of booking</h3>
+
+                <p>Upload your booking or payment document if available.</p>
+              </div>
+            </div>
+
+            <div className="journey-booking-field journey-booking-field-wide">
+              <label htmlFor="journey-proof">
+                Proof of Booking / Proof of Payment
+                <span className="journey-booking-optional"> Optional</span>
+              </label>
+
+              <input
+                id="journey-proof"
+                name="proofOfBooking"
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png,.webp"
+                onChange={handleFileChange}
+              />
+
+              <small className="journey-booking-file-help">
+                Upload your booking confirmation, payment confirmation, ticket or other relevant
+                document. Accepted files: PDF, JPG, JPEG, PNG and WEBP. Maximum file size: 10MB.
+              </small>
+
+              {proofFile && (
+                <div className="journey-booking-selected-file">📎 {proofFile.name}</div>
+              )}
+            </div>
+
+            {/* =================================================
+                ADDITIONAL INFORMATION
+            ================================================= */}
+
+            <div className="journey-booking-form-title">
+              <span>04</span>
 
               <div>
                 <h3>Anything else?</h3>

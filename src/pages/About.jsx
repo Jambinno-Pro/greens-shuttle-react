@@ -2,6 +2,8 @@ import { useState } from 'react';
 import SectionTitle from '../components/SectionTitle';
 import './About.css';
 
+const API_URL = 'http://localhost:5000';
+
 export default function About() {
   const [formData, setFormData] = useState({
     pickup: '',
@@ -16,11 +18,17 @@ export default function About() {
     message: '',
   });
 
+  const [proofFile, setProofFile] = useState(null);
+
   const [status, setStatus] = useState({
     loading: false,
     success: '',
     error: '',
   });
+
+  /* =========================================================
+     HANDLE TEXT / SELECT INPUTS
+  ========================================================= */
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -30,6 +38,26 @@ export default function About() {
       [name]: value,
     }));
   };
+
+  /* =========================================================
+     HANDLE PROOF FILE
+  ========================================================= */
+
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0] || null;
+
+    setProofFile(file);
+
+    setStatus({
+      loading: false,
+      success: '',
+      error: '',
+    });
+  };
+
+  /* =========================================================
+     SUBMIT BOOKING
+  ========================================================= */
 
   const handleBookingSubmit = async (e) => {
     e.preventDefault();
@@ -41,12 +69,38 @@ export default function About() {
     });
 
     try {
-      const response = await fetch('http://localhost:5000/api/bookings', {
+      /*
+        IMPORTANT:
+        We use FormData because the form contains
+        a file upload.
+      */
+
+      const bookingData = new FormData();
+
+      bookingData.append('pickup', formData.pickup);
+      bookingData.append('destination', formData.destination);
+      bookingData.append('travelDate', formData.travelDate);
+      bookingData.append('travelTime', formData.travelTime);
+      bookingData.append('passengers', formData.passengers);
+
+      bookingData.append('name', formData.name);
+      bookingData.append('phone', formData.phone);
+      bookingData.append('email', formData.email);
+
+      bookingData.append('service', formData.service);
+      bookingData.append('message', formData.message);
+
+      /*
+        Add proof file if the customer selected one.
+      */
+
+      if (proofFile) {
+        bookingData.append('proofOfBooking', proofFile);
+      }
+
+      const response = await fetch(`${API_URL}/api/bookings`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
+        body: bookingData,
       });
 
       const data = await response.json();
@@ -59,9 +113,13 @@ export default function About() {
 
       setStatus({
         loading: false,
-        success: data.message || 'Your booking request has been sent successfully!',
+        success: data.message || 'Your booking request has been sent successfully.',
         error: '',
       });
+
+      /* =====================================================
+         RESET FORM
+      ===================================================== */
 
       setFormData({
         pickup: '',
@@ -75,6 +133,14 @@ export default function About() {
         service: 'general-booking',
         message: '',
       });
+
+      /* Remove selected proof file */
+
+      setProofFile(null);
+
+      /* Reset actual file input */
+
+      e.target.reset();
     } catch (error) {
       console.error('About booking submission error:', error);
 
@@ -91,6 +157,7 @@ export default function About() {
       {/* =====================================================
           ABOUT HERO
       ===================================================== */}
+
       <section className="about-page-hero">
         <div className="about-page-hero-overlay">
           <div className="container">
@@ -112,6 +179,7 @@ export default function About() {
       {/* =====================================================
           INTRODUCTION
       ===================================================== */}
+
       <section className="about-intro section">
         <div className="container">
           <div className="about-intro-grid">
@@ -147,6 +215,7 @@ export default function About() {
       {/* =====================================================
           WHY CHOOSE US
       ===================================================== */}
+
       <section className="about-why section">
         <div className="container">
           <SectionTitle
@@ -204,8 +273,9 @@ export default function About() {
       </section>
 
       {/* =====================================================
-          EXPERIENCE IMAGE
+          EXPERIENCE
       ===================================================== */}
+
       <section className="about-experience">
         <div className="about-experience-image">
           <img src="/images/about/greens-experience.jpg" alt="Greens Shuttle travel experience" />
@@ -236,6 +306,7 @@ export default function About() {
       {/* =====================================================
           MISSION & VISION
       ===================================================== */}
+
       <section className="about-mission-vision section">
         <div className="container">
           <div className="about-mission-vision-grid">
@@ -280,6 +351,7 @@ export default function About() {
       {/* =====================================================
           CORE VALUES
       ===================================================== */}
+
       <section className="about-values section">
         <div className="container">
           <SectionTitle
@@ -338,6 +410,7 @@ export default function About() {
       {/* =====================================================
           STATS
       ===================================================== */}
+
       <section className="about-stats">
         <div className="container">
           <div className="about-stats-grid">
@@ -365,12 +438,16 @@ export default function About() {
       </section>
 
       {/* =====================================================
-          CTA / BOOKING FORM
+          BOOKING CTA
       ===================================================== */}
+
       <section className="about-cta">
         <div className="about-cta-overlay">
           <div className="about-booking-card">
-            {/* FORM INTRO */}
+            {/* =================================================
+                FORM HEADER
+            ================================================= */}
+
             <div className="about-booking-header">
               <span className="section-eyebrow">PLAN YOUR JOURNEY</span>
 
@@ -387,10 +464,17 @@ export default function About() {
 
             {/* =================================================
                 BOOKING FORM
-                SAME CLASSES — CSS NOT CHANGED
             ================================================= */}
-            <form className="about-booking-form" onSubmit={handleBookingSubmit}>
-              {/* LOCATION */}
+
+            <form
+              className="about-booking-form"
+              onSubmit={handleBookingSubmit}
+              encType="multipart/form-data"
+            >
+              {/* =================================================
+                  PICKUP
+              ================================================= */}
+
               <div className="about-form-group">
                 <label htmlFor="about-pickup">Pick-up Location</label>
 
@@ -404,6 +488,10 @@ export default function About() {
                   required
                 />
               </div>
+
+              {/* =================================================
+                  DESTINATION
+              ================================================= */}
 
               <div className="about-form-group">
                 <label htmlFor="about-destination">Destination</label>
@@ -419,7 +507,10 @@ export default function About() {
                 />
               </div>
 
-              {/* DATE & TIME */}
+              {/* =================================================
+                  DATE & TIME
+              ================================================= */}
+
               <div className="about-form-row">
                 <div className="about-form-group">
                   <label htmlFor="about-travel-date">Travel Date</label>
@@ -448,7 +539,10 @@ export default function About() {
                 </div>
               </div>
 
-              {/* PASSENGERS */}
+              {/* =================================================
+                  PASSENGERS
+              ================================================= */}
+
               <div className="about-form-group">
                 <label htmlFor="about-passengers">Passengers</label>
 
@@ -464,17 +558,27 @@ export default function About() {
                   </option>
 
                   <option value="1">1 Passenger</option>
+
                   <option value="2">2 Passengers</option>
+
                   <option value="3">3 Passengers</option>
+
                   <option value="4">4 Passengers</option>
+
                   <option value="5">5 Passengers</option>
+
                   <option value="6">6 Passengers</option>
+
                   <option value="7">7 Passengers</option>
+
                   <option value="8">8+ Passengers</option>
                 </select>
               </div>
 
-              {/* CONTACT DETAILS */}
+              {/* =================================================
+                  CONTACT DETAILS
+              ================================================= */}
+
               <div className="about-form-row">
                 <div className="about-form-group">
                   <label htmlFor="about-name">Full Name</label>
@@ -505,7 +609,10 @@ export default function About() {
                 </div>
               </div>
 
-              {/* EMAIL */}
+              {/* =================================================
+                  EMAIL
+              ================================================= */}
+
               <div className="about-form-group">
                 <label htmlFor="about-email">Email Address</label>
 
@@ -520,7 +627,70 @@ export default function About() {
                 />
               </div>
 
-              {/* MESSAGE */}
+              {/* =================================================
+                  SERVICE
+              ================================================= */}
+
+              <div className="about-form-group">
+                <label htmlFor="about-service">Service Required</label>
+
+                <select
+                  id="about-service"
+                  name="service"
+                  value={formData.service}
+                  onChange={handleChange}
+                  required
+                >
+                  <option value="general-booking">General Booking</option>
+
+                  <option value="airport-transfer">Airport Transfer</option>
+
+                  <option value="wine-tour">Wine Tour</option>
+
+                  <option value="dinner-transfer">Dinner Transfer</option>
+
+                  <option value="wedding">Wedding Transport</option>
+
+                  <option value="event">Event Transport</option>
+
+                  <option value="chauffeur">Chauffeur Service</option>
+
+                  <option value="private-transfer">Private Transfer</option>
+
+                  <option value="group-transport">Group Transport</option>
+                </select>
+              </div>
+
+              {/* =================================================
+                  PROOF OF BOOKING / PAYMENT
+              ================================================= */}
+
+              <div className="about-form-group">
+                <label htmlFor="about-proof">
+                  Proof of Booking / Proof of Payment
+                  <span className="about-form-optional"> Optional</span>
+                </label>
+
+                <input
+                  id="about-proof"
+                  type="file"
+                  name="proofOfBooking"
+                  accept=".pdf,.jpg,.jpeg,.png,.webp"
+                  onChange={handleFileChange}
+                />
+
+                <small className="about-file-help">
+                  Upload your booking confirmation, payment confirmation, ticket or other relevant
+                  document. Accepted files: PDF, JPG, JPEG, PNG and WEBP.
+                </small>
+
+                {proofFile && <div className="about-selected-file">📎 {proofFile.name}</div>}
+              </div>
+
+              {/* =================================================
+                  MESSAGE
+              ================================================= */}
+
               <div className="about-form-group">
                 <label htmlFor="about-message">Additional Information</label>
 
@@ -534,12 +704,18 @@ export default function About() {
                 />
               </div>
 
-              {/* STATUS */}
+              {/* =================================================
+                  STATUS
+              ================================================= */}
+
               {status.success && <div className="about-booking-success">{status.success}</div>}
 
               {status.error && <div className="about-booking-error">{status.error}</div>}
 
-              {/* SUBMIT */}
+              {/* =================================================
+                  SUBMIT
+              ================================================= */}
+
               <button type="submit" className="about-booking-submit" disabled={status.loading}>
                 <span>{status.loading ? 'Sending...' : 'Book Your Trip'}</span>
 
