@@ -1,0 +1,273 @@
+/* =========================================================
+   SERVICES PAGE
+========================================================= */
+
+.services-page {
+  width: 100%;
+  background: #ffffff;
+}
+
+/* =========================================================
+   SERVICES HERO
+========================================================= */
+
+.services-page-hero {
+  position: relative;
+
+  min-height: 430px;
+
+  display: flex;
+  align-items: center;
+
+  background:
+    linear-gradient(rgba(0, 40, 0, 0.82), rgba(0, 40, 0, 0.72)),
+    url('/images/services/services-hero.jpg') center / cover no-repeat;
+
+  color: #ffffff;
+}
+
+.services-page-hero-overlay {
+  width: 100%;
+  padding: 170px 0 110px;
+}
+
+.services-page-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  margin-bottom: 18px;
+
+  color: var(--brand-lime);
+
+  font-size: 10px;
+  font-weight: 800;
+
+  letter-spacing: 0.22em;
+}
+
+.services-page-eyebrow::before {
+  content: '';
+
+  width: 35px;
+  height: 2px;
+
+  background: var(--brand-lime);
+}
+
+.services-page-hero h1 {
+  margin: 0;
+
+  font-family: Helvetica, Arial, sans-serif;
+
+  font-size: clamp(52px, 7vw, 88px);
+
+  font-weight: 500;
+
+  line-height: 0.95;
+
+  letter-spacing: -0.045em;
+}
+
+.services-page-hero h1 span {
+  color: var(--brand-lime);
+}
+
+.services-page-hero p {
+  max-width: 580px;
+
+  margin: 25px 0 0;
+
+  color: rgba(255, 255, 255, 0.78);
+
+  font-size: 15px;
+
+  line-height: 1.7;
+}
+
+/* =========================================================
+   SERVICES SECTION
+========================================================= */
+
+.services-page-section {
+  padding: 90px 0 110px;
+
+  background: #ffffff;
+}
+
+/* =========================================================
+   SERVICES GRID
+========================================================= */
+
+.services-page-grid {
+  display: grid;
+
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+
+  gap: 28px;
+
+  margin-top: 55px;
+}
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 1000px) {
+  .services-page-hero {
+    min-height: 420px;
+  }
+
+  .services-page-hero-overlay {
+    padding: 110px 0 80px;
+  }
+
+  .services-page-hero h1 {
+    font-size: clamp(52px, 8vw, 72px);
+  }
+
+  .services-page-hero p {
+    max-width: 520px;
+    font-size: 14px;
+  }
+
+  .services-page-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+  }
+}
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 650px) {
+  .services-page-hero {
+    min-height: 620px;
+
+    display: flex;
+    align-items: center;
+
+    background-position: center;
+  }
+
+  .services-page-hero-overlay {
+    width: 100%;
+
+    padding: 100px 6% 70px;
+
+    box-sizing: border-box;
+  }
+
+  /* EYEBROW */
+
+  .services-page-eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+
+    margin-bottom: 16px;
+
+    font-size: 9px;
+
+    letter-spacing: 0.18em;
+  }
+
+  .services-page-eyebrow::before {
+    width: 24px;
+    height: 2px;
+  }
+
+  /* TITLE */
+
+  .services-page-hero h1,
+  .services-page-hero h2 {
+    max-width: 360px;
+
+    font-size: clamp(2.8rem, 13vw, 4.3rem);
+
+    line-height: 0.98;
+
+    letter-spacing: -0.045em;
+  }
+  /* DESCRIPTION */
+
+  .services-page-hero p {
+    max-width: 340px;
+
+    margin-top: 20px;
+
+    font-size: 0.95rem;
+
+    line-height: 1.7;
+  }
+
+  /* SERVICES SECTION */
+
+  .services-page-section {
+    padding: 65px 0 75px;
+  }
+
+  /* =======================================================
+     SERVICES GRID
+  ======================================================= */
+
+  .services-page-grid {
+    grid-template-columns: 1fr;
+
+    gap: 22px;
+
+    margin-top: 40px;
+  }
+}
+
+/* =========================================================
+   SMALL PHONES
+========================================================= */
+
+@media (max-width: 400px) {
+  .services-page-hero {
+    min-height: 620px;
+  }
+
+  .services-page-hero-overlay {
+    padding: 95px 6% 65px;
+  }
+
+  /* EYEBROW */
+
+  .services-page-eyebrow {
+    margin-bottom: 15px;
+
+    font-size: 8px;
+
+    letter-spacing: 0.16em;
+  }
+
+  .services-page-eyebrow::before {
+    width: 22px;
+  }
+
+  /* TITLE */
+
+  .services-page-hero h1,
+  .services-page-hero h2 {
+    max-width: 320px;
+
+    font-size: clamp(2.7rem, 13vw, 3.6rem);
+
+    line-height: 0.98;
+  }
+
+  /* DESCRIPTION */
+
+  .services-page-hero p {
+    max-width: 310px;
+
+    margin-top: 18px;
+
+    font-size: 0.92rem;
+
+    line-height: 1.65;
+  }
+}

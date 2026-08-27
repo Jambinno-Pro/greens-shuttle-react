@@ -1,0 +1,712 @@
+/* =========================================================
+   CONTACT PAGE
+   GREENS SHUTTLE BRAND SYSTEM
+========================================================= */
+
+.contact-page {
+  background: var(--off-white);
+  color: var(--text);
+  overflow: hidden;
+}
+
+/* =========================================================
+   HERO
+========================================================= */
+
+.contact-hero {
+  position: relative;
+  min-height: 68vh;
+  display: flex;
+  align-items: center;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(0, 40, 0, 0.94) 0%,
+      rgba(1, 59, 0, 0.82) 45%,
+      rgba(1, 59, 0, 0.42) 100%
+    ),
+    url('/images/contact-hero.jpg') center / cover no-repeat;
+}
+
+.contact-hero-overlay {
+  width: 100%;
+  padding: 140px 7% 100px;
+}
+
+.contact-hero-content {
+  max-width: 760px;
+  color: var(--white);
+  animation: contactFadeUp 0.8s ease forwards;
+}
+
+/* =========================================================
+   EYEBROW
+========================================================= */
+
+.contact-page .section-eyebrow {
+  display: inline-block;
+  margin-bottom: 18px;
+  color: var(--brand-lime);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+/* =========================================================
+   HEADINGS
+========================================================= */
+
+.contact-hero h1 {
+  margin: 0;
+  font-size: clamp(3rem, 7vw, 6rem);
+  line-height: 0.95;
+  font-weight: 600;
+  letter-spacing: -0.045em;
+}
+
+.contact-hero h1 span,
+.contact-section-heading h2 span,
+.contact-form-intro h2 span,
+.contact-location-content h2 span,
+.contact-cta-content h2 span {
+  display: block;
+  color: var(--brand-lime);
+}
+
+/* =========================================================
+   HERO TEXT
+========================================================= */
+
+.contact-hero p {
+  max-width: 650px;
+  margin: 28px 0 34px;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 1.05rem;
+  line-height: 1.8;
+}
+
+/* =========================================================
+   BUTTONS
+========================================================= */
+
+.contact-hero-btn,
+.contact-submit-btn,
+.map-btn,
+.contact-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  min-height: 54px;
+  padding: 0 27px;
+  border-radius: 999px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  transition:
+    transform 0.3s ease,
+    background 0.3s ease,
+    color 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.contact-hero-btn {
+  color: var(--brand-dark);
+  background: var(--white);
+}
+
+.contact-hero-btn:hover {
+  color: var(--white);
+  background: var(--brand-green);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px rgba(0, 40, 0, 0.2);
+}
+
+/* =========================================================
+   CONTACT INFORMATION SECTION
+========================================================= */
+
+.contact-info-section {
+  padding: 110px 7%;
+  background: var(--off-white);
+}
+
+.contact-container {
+  width: min(1200px, 100%);
+  margin: 0 auto;
+}
+
+.contact-section-heading {
+  max-width: 680px;
+  margin-bottom: 55px;
+}
+
+.contact-section-heading h2,
+.contact-form-intro h2,
+.contact-location-content h2,
+.contact-cta-content h2 {
+  margin: 0;
+  font-size: clamp(2.5rem, 5vw, 4.5rem);
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: -0.045em;
+}
+
+.contact-section-heading p,
+.contact-form-intro p,
+.contact-location-content p,
+.contact-cta-content p {
+  max-width: 620px;
+  margin-top: 24px;
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1.8;
+}
+
+/* =========================================================
+   CONTACT INFO CARDS
+========================================================= */
+
+.contact-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+}
+
+.contact-info-card {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  min-height: 135px;
+  padding: 28px;
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  background: var(--white);
+  color: var(--text);
+  text-decoration: none;
+  box-shadow: 0 15px 45px rgba(0, 40, 0, 0.05);
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease,
+    border-color 0.3s ease;
+}
+
+.contact-info-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(2, 136, 0, 0.3);
+  box-shadow: 0 22px 55px rgba(0, 40, 0, 0.1);
+}
+
+/* =========================================================
+   CONTACT ICON
+========================================================= */
+
+.contact-info-icon {
+  flex: 0 0 56px;
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--cream);
+  color: var(--brand-green);
+  font-size: 1.3rem;
+  transition:
+    background 0.3s ease,
+    color 0.3s ease,
+    transform 0.3s ease;
+}
+
+.contact-info-card:hover .contact-info-icon {
+  background: var(--brand-green);
+  color: var(--white);
+  transform: scale(1.05);
+}
+
+.contact-info-card span {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--brand-green);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+}
+
+.contact-info-card h3 {
+  margin: 0;
+  color: var(--text);
+  font-size: 1.05rem;
+  font-weight: 650;
+}
+
+.contact-info-card p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+/* =========================================================
+   CONTACT FORM SECTION
+========================================================= */
+
+.contact-form-section {
+  position: relative;
+  padding: 115px 7%;
+  background: linear-gradient(
+    135deg,
+    var(--brand-dark) 0%,
+    var(--brand-deep) 55%,
+    var(--brand-primary) 100%
+  );
+}
+
+.contact-form-wrapper {
+  display: grid;
+  grid-template-columns: 0.8fr 1.2fr;
+  gap: 70px;
+  align-items: start;
+}
+
+.contact-form-intro {
+  position: sticky;
+  top: 100px;
+}
+
+.contact-form-intro .section-eyebrow {
+  color: var(--brand-lime);
+}
+
+.contact-form-intro h2 {
+  color: var(--white);
+}
+
+.contact-form-intro h2 span {
+  color: var(--brand-lime);
+}
+
+.contact-form-intro p {
+  color: rgba(255, 255, 255, 0.68);
+}
+
+/* =========================================================
+   GLASS FORM
+========================================================= */
+
+.contact-form {
+  padding: 42px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 30px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.22);
+}
+
+.contact-form-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+}
+
+/* =========================================================
+   FORM FIELDS
+========================================================= */
+
+.contact-field {
+  margin-bottom: 22px;
+}
+
+.contact-field label {
+  display: block;
+  margin-bottom: 9px;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.contact-field input,
+.contact-field select,
+.contact-field textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  outline: none;
+  border-radius: 13px;
+  padding: 15px 17px;
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--white);
+  font-family: inherit;
+  font-size: 0.9rem;
+  transition:
+    border-color 0.25s ease,
+    background 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.contact-field input,
+.contact-field select {
+  height: 53px;
+}
+
+.contact-field textarea {
+  min-height: 145px;
+  resize: vertical;
+}
+
+.contact-field input::placeholder,
+.contact-field textarea::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.contact-field select {
+  cursor: pointer;
+}
+
+.contact-field select option {
+  background: var(--brand-deep);
+  color: var(--white);
+}
+
+.contact-field input:focus,
+.contact-field select:focus,
+.contact-field textarea:focus {
+  border-color: var(--brand-lime);
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 0 3px rgba(114, 209, 1, 0.12);
+}
+
+/* =========================================================
+   SUBMIT BUTTON
+========================================================= */
+
+.contact-submit-btn {
+  border: none;
+  cursor: pointer;
+  color: var(--brand-dark);
+  background: var(--brand-lime);
+}
+
+.contact-submit-btn:hover {
+  background: var(--brand-soft);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px rgba(114, 209, 1, 0.2);
+}
+
+.contact-submit-btn span,
+.map-btn span,
+.contact-cta-btn span {
+  font-size: 1.1rem;
+  transition: transform 0.3s ease;
+}
+
+.contact-submit-btn:hover span,
+.map-btn:hover span,
+.contact-cta-btn:hover span {
+  transform: translateX(4px);
+}
+
+/* =========================================================
+   LOCATION SECTION
+========================================================= */
+
+.contact-location-section {
+  display: grid;
+  grid-template-columns: 0.85fr 1.15fr;
+  min-height: 500px;
+}
+
+.contact-location-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 90px 8%;
+  background: var(--cream);
+}
+
+.contact-location-content h2 {
+  max-width: 450px;
+}
+
+.contact-location-content h2 span {
+  color: var(--brand-green);
+}
+
+.contact-location-content p {
+  max-width: 460px;
+}
+
+.map-btn {
+  width: fit-content;
+  margin-top: 25px;
+  color: var(--white);
+  background: var(--brand-primary);
+}
+
+.map-btn:hover {
+  background: var(--brand-green);
+  box-shadow: 0 12px 30px rgba(0, 40, 0, 0.18);
+}
+
+/* =========================================================
+   MAP
+========================================================= */
+
+.contact-map-placeholder {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 500px;
+  background:
+    linear-gradient(rgba(0, 40, 0, 0.18), rgba(0, 40, 0, 0.18)),
+    url('/images/cape-town-map.jpg') center / cover no-repeat;
+}
+
+.map-pin {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 18px;
+  border: 1px solid rgba(0, 40, 0, 0.08);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 12px 35px rgba(0, 40, 0, 0.18);
+  animation: mapFloat 3s ease-in-out infinite;
+}
+
+.map-pin span {
+  color: var(--brand-green);
+  font-size: 1.2rem;
+}
+
+.map-pin p {
+  margin: 0;
+  color: var(--brand-dark);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+/* =========================================================
+   FINAL CTA
+========================================================= */
+
+.contact-cta {
+  position: relative;
+  min-height: 520px;
+  background:
+    linear-gradient(90deg, rgba(0, 40, 0, 0.94), rgba(0, 40, 0, 0.52)),
+    url('/images/contact-cta.jpg') center / cover no-repeat;
+}
+
+.contact-cta-overlay {
+  display: flex;
+  align-items: center;
+  min-height: 520px;
+  padding: 90px 7%;
+}
+
+.contact-cta-content {
+  max-width: 700px;
+  color: var(--white);
+}
+
+.contact-cta-content .section-eyebrow {
+  color: var(--brand-lime);
+}
+
+.contact-cta-content h2 span {
+  color: var(--brand-lime);
+}
+
+.contact-cta-content p {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.contact-cta-btn {
+  margin-top: 18px;
+  color: var(--brand-dark);
+  background: var(--white);
+}
+
+.contact-cta-btn:hover {
+  color: var(--white);
+  background: var(--brand-green);
+  box-shadow: 0 15px 40px rgba(0, 40, 0, 0.25);
+}
+
+/* =========================================================
+   ANIMATIONS
+========================================================= */
+
+@keyframes contactFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(25px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes mapFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 900px) {
+  .contact-form-wrapper {
+    grid-template-columns: 1fr;
+    gap: 45px;
+  }
+
+  .contact-form-intro {
+    position: static;
+  }
+
+  .contact-location-section {
+    grid-template-columns: 1fr;
+  }
+
+  .contact-map-placeholder {
+    min-height: 400px;
+  }
+}
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 650px) {
+  .contact-hero {
+    min-height: 620px;
+    background-position: center;
+  }
+
+  .contact-hero-overlay {
+    padding: 100px 6% 70px;
+  }
+
+  .contact-hero h1 {
+    font-size: clamp(2.8rem, 13vw, 4.3rem);
+  }
+
+  .contact-hero p {
+    font-size: 0.95rem;
+    line-height: 1.7;
+  }
+
+  .contact-info-section,
+  .contact-form-section {
+    padding: 80px 6%;
+  }
+
+  .contact-section-heading {
+    margin-bottom: 38px;
+  }
+
+  .contact-section-heading h2,
+  .contact-form-intro h2,
+  .contact-location-content h2,
+  .contact-cta-content h2 {
+    font-size: 2.7rem;
+  }
+
+  .contact-info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .contact-info-card {
+    min-height: 115px;
+    padding: 22px;
+  }
+
+  .contact-info-card h3 {
+    font-size: 0.95rem;
+    word-break: break-word;
+  }
+
+  .contact-form-wrapper {
+    gap: 35px;
+  }
+
+  .contact-form {
+    padding: 25px 20px;
+    border-radius: 24px;
+  }
+
+  .contact-form-row {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .contact-field input,
+  .contact-field select {
+    height: 51px;
+  }
+
+  .contact-field textarea {
+    min-height: 130px;
+  }
+
+  .contact-submit-btn {
+    width: 100%;
+  }
+
+  .contact-location-content {
+    padding: 75px 6%;
+  }
+
+  .contact-map-placeholder {
+    min-height: 330px;
+  }
+
+  .contact-cta,
+  .contact-cta-overlay {
+    min-height: 500px;
+  }
+
+  .contact-cta-overlay {
+    padding: 75px 6%;
+  }
+}
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media (max-width: 400px) {
+  .contact-hero h1 {
+    font-size: 2.65rem;
+  }
+
+  .contact-section-heading h2,
+  .contact-form-intro h2,
+  .contact-location-content h2,
+  .contact-cta-content h2 {
+    font-size: 2.35rem;
+  }
+
+  .contact-info-card {
+    gap: 15px;
+    padding: 18px;
+  }
+
+  .contact-info-icon {
+    flex-basis: 48px;
+    width: 48px;
+    height: 48px;
+  }
+}

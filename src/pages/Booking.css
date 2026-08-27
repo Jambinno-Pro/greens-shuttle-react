@@ -1,0 +1,870 @@
+/* =========================================================
+   JOURNEY BOOKING PAGE
+========================================================= */
+
+.journey-booking-page {
+  width: 100%;
+  overflow: hidden;
+  background: var(--off-white);
+}
+
+/* =========================================================
+   HERO
+========================================================= */
+
+.journey-booking-hero {
+  position: relative;
+
+  width: 100%;
+  min-height: 620px;
+
+  display: flex;
+  align-items: center;
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(0, 40, 0, 0.94) 0%,
+      rgba(1, 59, 0, 0.82) 45%,
+      rgba(1, 59, 0, 0.35) 100%
+    ),
+    url('/images/booking-hero.jpg') center center / cover no-repeat;
+}
+
+.journey-booking-hero-overlay {
+  width: 100%;
+
+  padding: 120px 7% 80px;
+
+  box-sizing: border-box;
+}
+
+.journey-booking-hero-content {
+  width: 100%;
+  max-width: 760px;
+}
+
+.journey-booking-eyebrow {
+  display: inline-block;
+
+  margin-bottom: 18px;
+
+  color: var(--brand-lime);
+
+  font-size: 10px;
+  font-weight: 800;
+
+  letter-spacing: 0.22em;
+
+  text-transform: uppercase;
+}
+
+.journey-booking-hero h1 {
+  margin: 0;
+
+  color: var(--white);
+
+  font-size: clamp(3.5rem, 6vw, 6rem);
+
+  font-weight: 500;
+
+  line-height: 0.95;
+
+  letter-spacing: -0.045em;
+}
+
+.journey-booking-hero h1 span {
+  display: block;
+
+  color: var(--brand-lime);
+}
+
+.journey-booking-hero-content > p {
+  max-width: 620px;
+
+  margin: 28px 0 0;
+
+  color: rgba(255, 255, 255, 0.82);
+
+  font-size: 15px;
+
+  line-height: 1.8;
+}
+
+/* =========================================================
+   MAIN BOOKING AREA
+========================================================= */
+
+.journey-booking-area {
+  width: 100%;
+
+  padding: 90px 0 110px;
+
+  background: var(--off-white);
+}
+
+.journey-booking-layout {
+  width: min(1200px, calc(100% - 80px));
+
+  margin: 0 auto;
+
+  display: grid;
+
+  grid-template-columns:
+    minmax(280px, 0.72fr)
+    minmax(550px, 1.28fr);
+
+  gap: 70px;
+
+  align-items: start;
+}
+
+/* =========================================================
+   INTRO
+========================================================= */
+
+.journey-booking-intro {
+  padding-top: 15px;
+}
+
+.journey-booking-section-label {
+  display: block;
+
+  margin-bottom: 15px;
+
+  color: var(--brand-green);
+
+  font-size: 10px;
+  font-weight: 800;
+
+  letter-spacing: 0.2em;
+
+  text-transform: uppercase;
+}
+
+.journey-booking-intro h2 {
+  margin: 0;
+
+  color: var(--brand-dark);
+
+  font-size: clamp(40px, 4vw, 58px);
+
+  font-weight: 500;
+
+  line-height: 1;
+
+  letter-spacing: -0.04em;
+}
+
+.journey-booking-intro h2 span {
+  color: var(--brand-green);
+}
+
+.journey-booking-description {
+  max-width: 480px;
+
+  margin: 20px 0 0;
+
+  color: var(--muted);
+
+  font-size: 14px;
+
+  line-height: 1.75;
+}
+
+/* =========================================================
+   HELP CARD
+========================================================= */
+
+.journey-booking-help {
+  display: flex;
+
+  gap: 17px;
+
+  margin-top: 38px;
+
+  padding: 23px;
+
+  border: 1px solid var(--border);
+
+  border-radius: 20px;
+
+  background: var(--white);
+
+  box-shadow: 0 15px 45px rgba(0, 40, 0, 0.05);
+}
+
+.journey-booking-help-icon {
+  flex-shrink: 0;
+
+  width: 43px;
+  height: 43px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 50%;
+
+  background: var(--cream);
+
+  color: var(--brand-green);
+
+  font-weight: 800;
+}
+
+.journey-booking-help h3 {
+  margin: 0 0 5px;
+
+  color: var(--text);
+
+  font-size: 15px;
+}
+
+.journey-booking-help p {
+  margin: 0 0 8px;
+
+  color: var(--muted);
+
+  font-size: 12px;
+
+  line-height: 1.6;
+}
+
+.journey-booking-help a {
+  color: var(--brand-green);
+
+  font-size: 13px;
+  font-weight: 800;
+
+  text-decoration: none;
+}
+
+/* =========================================================
+   FORM
+========================================================= */
+
+.journey-booking-form {
+  position: relative;
+
+  width: 100%;
+
+  box-sizing: border-box;
+
+  padding: 42px;
+
+  border: 2px solid transparent;
+
+  border-radius: 28px;
+
+  background:
+    linear-gradient(var(--brand-dark), var(--brand-deep)) padding-box,
+    linear-gradient(
+        120deg,
+        var(--brand-primary),
+        var(--brand-green),
+        var(--brand-lime),
+        #d4af37,
+        var(--brand-lime),
+        var(--brand-green),
+        var(--brand-primary)
+      )
+      border-box;
+
+  background-size:
+    100% 100%,
+    300% 300%;
+
+  animation: journeyBookingBorder 8s ease infinite;
+
+  box-shadow: 0 25px 70px rgba(0, 40, 0, 0.16);
+}
+
+@keyframes journeyBookingBorder {
+  0% {
+    background-position:
+      0 0,
+      0% 50%;
+  }
+
+  50% {
+    background-position:
+      0 0,
+      100% 50%;
+  }
+
+  100% {
+    background-position:
+      0 0,
+      0% 50%;
+  }
+}
+
+/* =========================================================
+   FORM SECTION TITLES
+========================================================= */
+
+.journey-booking-form-title {
+  display: flex;
+
+  align-items: flex-start;
+
+  gap: 15px;
+
+  margin-bottom: 26px;
+}
+
+.journey-booking-form-title:not(:first-child) {
+  margin-top: 42px;
+}
+
+.journey-booking-form-title > span {
+  flex-shrink: 0;
+
+  width: 38px;
+  height: 38px;
+
+  display: grid;
+  place-items: center;
+
+  border: 1px solid rgba(114, 209, 1, 0.35);
+
+  border-radius: 50%;
+
+  color: var(--brand-lime);
+
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.journey-booking-form-title h3 {
+  margin: 0 0 4px;
+
+  color: var(--white);
+
+  font-size: 18px;
+
+  font-weight: 650;
+}
+
+.journey-booking-form-title p {
+  margin: 0;
+
+  color: rgba(255, 255, 255, 0.5);
+
+  font-size: 11px;
+
+  line-height: 1.5;
+}
+
+/* =========================================================
+   FORM GRID
+========================================================= */
+
+.journey-booking-fields {
+  display: grid;
+
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  gap: 0 18px;
+}
+
+.journey-booking-field-wide {
+  grid-column: 1 / -1;
+}
+
+/* =========================================================
+   FIELDS
+========================================================= */
+
+.journey-booking-field {
+  min-width: 0;
+
+  margin-bottom: 20px;
+}
+
+.journey-booking-field label {
+  display: block;
+
+  margin-bottom: 9px;
+
+  color: rgba(255, 255, 255, 0.82);
+
+  font-size: 10px;
+
+  font-weight: 700;
+
+  letter-spacing: 0.04em;
+}
+
+.journey-booking-field input,
+.journey-booking-field select,
+.journey-booking-field textarea {
+  width: 100%;
+  max-width: 100%;
+
+  box-sizing: border-box;
+
+  border: 1px solid rgba(255, 255, 255, 0.15);
+
+  border-radius: 12px;
+
+  outline: none;
+
+  background: rgba(255, 255, 255, 0.07);
+
+  color: var(--white);
+
+  font-family: inherit;
+
+  font-size: 12px;
+
+  transition:
+    border-color 0.25s ease,
+    background 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.journey-booking-field input,
+.journey-booking-field select {
+  height: 52px;
+
+  padding: 0 15px;
+}
+
+.journey-booking-field textarea {
+  min-height: 140px;
+
+  padding: 15px;
+
+  resize: vertical;
+}
+
+.journey-booking-field input::placeholder,
+.journey-booking-field textarea::placeholder {
+  color: rgba(255, 255, 255, 0.38);
+}
+
+.journey-booking-field select {
+  cursor: pointer;
+}
+
+.journey-booking-field select option {
+  background: var(--brand-deep);
+
+  color: var(--white);
+}
+
+/* =========================================================
+   FOCUS
+========================================================= */
+
+.journey-booking-field input:focus,
+.journey-booking-field select:focus,
+.journey-booking-field textarea:focus {
+  border-color: var(--brand-lime);
+
+  background: rgba(255, 255, 255, 0.1);
+
+  box-shadow: 0 0 0 3px rgba(114, 209, 1, 0.12);
+}
+
+.journey-booking-field input[type='date'],
+.journey-booking-field input[type='time'] {
+  color-scheme: dark;
+}
+
+/* =========================================================
+   MESSAGE
+========================================================= */
+
+.journey-booking-message {
+  margin-bottom: 5px;
+}
+
+/* =========================================================
+   SUBMIT
+========================================================= */
+
+.journey-booking-submit {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 25px;
+
+  margin-top: 25px;
+
+  padding-top: 28px;
+
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.journey-booking-submit p {
+  max-width: 390px;
+
+  margin: 0;
+
+  color: rgba(255, 255, 255, 0.48);
+
+  font-size: 10px;
+
+  line-height: 1.6;
+}
+
+/* =========================================================
+   SUBMIT BUTTON
+========================================================= */
+
+.journey-booking-button {
+  flex-shrink: 0;
+
+  min-height: 52px;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 13px;
+
+  padding: 0 8px 0 20px;
+
+  border: none;
+
+  border-radius: 999px;
+
+  background: linear-gradient(
+    135deg,
+    var(--brand-primary),
+    var(--brand-green),
+    var(--brand-bright)
+  );
+
+  color: var(--white);
+
+  font-family: inherit;
+
+  font-size: 11px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  box-shadow: 0 8px 22px rgba(2, 136, 0, 0.22);
+
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.journey-booking-button strong {
+  width: 36px;
+  height: 36px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 50%;
+
+  background: var(--brand-lime);
+
+  color: var(--brand-dark);
+
+  font-size: 16px;
+
+  transition:
+    transform 0.3s ease,
+    background 0.3s ease;
+}
+
+.journey-booking-button:hover {
+  transform: translateY(-2px);
+
+  box-shadow: 0 13px 30px rgba(0, 40, 0, 0.28);
+}
+
+.journey-booking-button:hover strong {
+  transform: translateX(4px);
+
+  background: var(--brand-soft);
+}
+
+/* =========================================================
+   QUICK CONTACT
+========================================================= */
+
+.journey-booking-contact {
+  width: 100%;
+
+  box-sizing: border-box;
+
+  padding: 105px 7%;
+
+  background: linear-gradient(135deg, var(--brand-primary), var(--brand-dark));
+}
+
+.journey-booking-contact-inner {
+  width: min(900px, 100%);
+
+  margin: 0 auto;
+
+  text-align: center;
+}
+
+.journey-booking-contact-inner h2 {
+  margin: 0;
+
+  color: var(--white);
+
+  font-size: clamp(40px, 5vw, 70px);
+
+  font-weight: 500;
+
+  line-height: 0.98;
+
+  letter-spacing: -0.045em;
+}
+
+.journey-booking-contact-inner h2 span {
+  display: block;
+
+  color: var(--brand-lime);
+}
+
+.journey-booking-contact-inner > p {
+  max-width: 600px;
+
+  margin: 24px auto 35px;
+
+  color: rgba(255, 255, 255, 0.68);
+
+  font-size: 14px;
+
+  line-height: 1.8;
+}
+
+/* =========================================================
+   CONTACT BUTTONS
+========================================================= */
+
+.journey-booking-actions {
+  display: flex;
+
+  justify-content: center;
+
+  flex-wrap: wrap;
+
+  gap: 12px;
+}
+
+.journey-booking-action {
+  min-height: 50px;
+
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  box-sizing: border-box;
+
+  padding: 0 24px;
+
+  border: 1px solid rgba(255, 255, 255, 0.18);
+
+  border-radius: 999px;
+
+  background: rgba(255, 255, 255, 0.08);
+
+  color: var(--white);
+
+  font-size: 11px;
+
+  font-weight: 700;
+
+  text-decoration: none;
+
+  transition:
+    transform 0.3s ease,
+    background 0.3s ease,
+    border-color 0.3s ease;
+}
+
+.journey-booking-action:hover {
+  transform: translateY(-3px);
+
+  background: var(--brand-green);
+
+  border-color: var(--brand-green);
+}
+
+.journey-booking-whatsapp:hover {
+  background: var(--brand-bright);
+
+  border-color: var(--brand-bright);
+}
+
+.journey-booking-email:hover {
+  background: var(--brand-lime);
+
+  border-color: var(--brand-lime);
+
+  color: var(--brand-dark);
+}
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 1000px) {
+  .journey-booking-layout {
+    width: min(760px, calc(100% - 48px));
+
+    grid-template-columns: 1fr;
+
+    gap: 50px;
+  }
+}
+
+/* =========================================================
+   SMALL TABLET
+========================================================= */
+
+@media (max-width: 800px) {
+  .journey-booking-area {
+    padding: 70px 0 85px;
+  }
+
+  .journey-booking-layout {
+    width: calc(100% - 40px);
+  }
+
+  .journey-booking-form {
+    padding: 34px;
+  }
+}
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 650px) {
+  .journey-booking-hero {
+    min-height: 620px;
+
+    background-position: center;
+  }
+
+  .journey-booking-hero-overlay {
+    padding: 100px 6% 70px;
+  }
+
+  .journey-booking-hero h1 {
+    font-size: clamp(2.8rem, 13vw, 4.3rem);
+  }
+
+  .journey-booking-hero-content > p {
+    font-size: 13px;
+
+    line-height: 1.7;
+  }
+
+  /* BOOKING */
+
+  .journey-booking-area {
+    padding: 55px 0 65px;
+  }
+
+  .journey-booking-layout {
+    width: calc(100% - 28px);
+
+    gap: 35px;
+  }
+
+  /* FORM */
+
+  .journey-booking-form {
+    padding: 27px 20px;
+
+    border-radius: 22px;
+  }
+
+  .journey-booking-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .journey-booking-field-wide {
+    grid-column: auto;
+  }
+
+  /* FORM HEADINGS */
+
+  .journey-booking-form-title {
+    gap: 12px;
+  }
+
+  .journey-booking-form-title:not(:first-child) {
+    margin-top: 35px;
+  }
+
+  /* SUBMIT */
+
+  .journey-booking-submit {
+    flex-direction: column;
+
+    align-items: stretch;
+
+    gap: 20px;
+  }
+
+  .journey-booking-submit p {
+    max-width: none;
+  }
+
+  .journey-booking-button {
+    width: 100%;
+
+    justify-content: space-between;
+  }
+
+  /* CONTACT */
+
+  .journey-booking-contact {
+    padding: 80px 6%;
+  }
+
+  .journey-booking-contact-inner h2 {
+    font-size: 2.8rem;
+  }
+
+  .journey-booking-actions {
+    flex-direction: column;
+  }
+
+  .journey-booking-action {
+    width: 100%;
+  }
+}
+
+/* =========================================================
+   VERY SMALL PHONES
+========================================================= */
+
+@media (max-width: 400px) {
+  .journey-booking-hero h1 {
+    font-size: 2.65rem;
+  }
+
+  .journey-booking-form {
+    padding: 24px 17px;
+  }
+
+  .journey-booking-intro h2 {
+    font-size: 38px;
+  }
+
+  .journey-booking-contact-inner h2 {
+    font-size: 2.4rem;
+  }
+}
