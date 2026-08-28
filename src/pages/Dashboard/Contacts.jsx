@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import './Contacts.css';
 
 const API_URL = 'http://localhost:5000';
 

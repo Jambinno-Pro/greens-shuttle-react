@@ -1,11 +1,20 @@
 import React, { useEffect, useState } from 'react';
 
+import './DashboardOverview.css';
+
+const API_URL = 'http://localhost:5000';
+
 const DashboardOverview = () => {
   const [bookings, setBookings] = useState([]);
   const [contacts, setContacts] = useState([]);
   const [quotes, setQuotes] = useState([]);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  /* =========================================================
+     LOAD DASHBOARD DATA
+  ========================================================= */
 
   useEffect(() => {
     const loadDashboardData = async () => {
@@ -14,9 +23,9 @@ const DashboardOverview = () => {
         setError('');
 
         const [bookingsResponse, contactsResponse, quotesResponse] = await Promise.all([
-          fetch('http://localhost:5000/api/bookings'),
-          fetch('http://localhost:5000/api/contact'),
-          fetch('http://localhost:5000/api/quotes'),
+          fetch(`${API_URL}/api/bookings`),
+          fetch(`${API_URL}/api/contact`),
+          fetch(`${API_URL}/api/quotes`),
         ]);
 
         if (!bookingsResponse.ok || !contactsResponse.ok || !quotesResponse.ok) {
@@ -32,6 +41,7 @@ const DashboardOverview = () => {
         setQuotes(quotesData.quotes || []);
       } catch (err) {
         console.error('Dashboard error:', err);
+
         setError('Unable to load dashboard data.');
       } finally {
         setLoading(false);
@@ -41,11 +51,19 @@ const DashboardOverview = () => {
     loadDashboardData();
   }, []);
 
+  /* =========================================================
+     STATISTICS
+  ========================================================= */
+
   const pendingBookings = bookings.filter((booking) => booking.status === 'pending').length;
 
   const unreadContacts = contacts.filter((contact) => contact.status === 'unread').length;
 
   const newQuotes = quotes.filter((quote) => quote.status === 'new').length;
+
+  /* =========================================================
+     DATE FORMAT
+  ========================================================= */
 
   const formatDate = (date) => {
     if (!date) return '-';
@@ -57,101 +75,156 @@ const DashboardOverview = () => {
     });
   };
 
+  /* =========================================================
+     RECENT BOOKINGS
+  ========================================================= */
+
   const recentBookings = [...bookings]
     .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
     .slice(0, 5);
 
+  /* =========================================================
+     LOADING
+  ========================================================= */
+
   if (loading) {
     return (
-      <div className="dashboard-loading">
-        <div className="dashboard-loading-spinner"></div>
+      <div className="overview-loading">
+        <div className="overview-loading-spinner"></div>
+
         <p>Loading dashboard...</p>
       </div>
     );
   }
 
+  /* =========================================================
+     PAGE
+  ========================================================= */
+
   return (
-    <div className="dashboard-overview">
-      {/* ERROR */}
-      {error && <div className="dashboard-error">{error}</div>}
+    <main className="overview-page">
+      {/* =====================================================
+          ERROR
+      ====================================================== */}
 
-      {/* STATS */}
-      <div className="dashboard-stats-grid">
-        <div className="dashboard-stat-card">
-          <div className="dashboard-stat-top">
-            <span className="dashboard-stat-label">TOTAL BOOKINGS</span>
+      {error && (
+        <div className="overview-error">
+          <span>!</span>
 
-            <span className="dashboard-stat-icon">▣</span>
+          <p>{error}</p>
+        </div>
+      )}
+
+      {/* =====================================================
+          STATISTICS
+      ====================================================== */}
+
+      <section className="overview-stats">
+        {/* TOTAL BOOKINGS */}
+
+        <div className="overview-stat-card overview-stat-bookings">
+          <div className="overview-stat-top">
+            <span className="overview-stat-label">TOTAL BOOKINGS</span>
+
+            <div className="overview-stat-icon">▣</div>
           </div>
 
-          <strong>{bookings.length}</strong>
+          <strong className="overview-stat-number">{bookings.length}</strong>
 
-          <span className="dashboard-stat-description">All booking requests</span>
+          <span className="overview-stat-description">All booking requests</span>
         </div>
 
-        <div className="dashboard-stat-card">
-          <div className="dashboard-stat-top">
-            <span className="dashboard-stat-label">PENDING BOOKINGS</span>
+        {/* PENDING BOOKINGS */}
 
-            <span className="dashboard-stat-icon">◷</span>
+        <div className="overview-stat-card overview-stat-pending">
+          <div className="overview-stat-top">
+            <span className="overview-stat-label">PENDING BOOKINGS</span>
+
+            <div className="overview-stat-icon">◷</div>
           </div>
 
-          <strong>{pendingBookings}</strong>
+          <strong className="overview-stat-number">{pendingBookings}</strong>
 
-          <span className="dashboard-stat-description">Awaiting attention</span>
+          <span className="overview-stat-description">Awaiting attention</span>
         </div>
 
-        <div className="dashboard-stat-card">
-          <div className="dashboard-stat-top">
-            <span className="dashboard-stat-label">QUOTE REQUESTS</span>
+        {/* QUOTES */}
 
-            <span className="dashboard-stat-icon">▤</span>
+        <div className="overview-stat-card overview-stat-quotes">
+          <div className="overview-stat-top">
+            <span className="overview-stat-label">QUOTE REQUESTS</span>
+
+            <div className="overview-stat-icon">▤</div>
           </div>
 
-          <strong>{quotes.length}</strong>
+          <strong className="overview-stat-number">{quotes.length}</strong>
 
-          <span className="dashboard-stat-description">
-            {newQuotes} new request{newQuotes === 1 ? '' : 's'}
+          <span className="overview-stat-description">
+            {newQuotes} new request
+            {newQuotes === 1 ? '' : 's'}
           </span>
         </div>
 
-        <div className="dashboard-stat-card">
-          <div className="dashboard-stat-top">
-            <span className="dashboard-stat-label">CONTACT ENQUIRIES</span>
+        {/* CONTACTS */}
 
-            <span className="dashboard-stat-icon">✉</span>
+        <div className="overview-stat-card overview-stat-contacts">
+          <div className="overview-stat-top">
+            <span className="overview-stat-label">CONTACT ENQUIRIES</span>
+
+            <div className="overview-stat-icon">✉</div>
           </div>
 
-          <strong>{contacts.length}</strong>
+          <strong className="overview-stat-number">{contacts.length}</strong>
 
-          <span className="dashboard-stat-description">
+          <span className="overview-stat-description">
             {unreadContacts} unread message
             {unreadContacts === 1 ? '' : 's'}
           </span>
         </div>
-      </div>
+      </section>
 
-      {/* RECENT BOOKINGS */}
-      <section className="dashboard-panel">
-        <div className="dashboard-panel-header">
-          <div>
-            <span className="dashboard-panel-eyebrow">ACTIVITY</span>
+      {/* =====================================================
+          RECENT BOOKINGS
+      ====================================================== */}
+
+      <section className="overview-panel">
+        {/* PANEL HEADER */}
+
+        <div className="overview-panel-header">
+          <div className="overview-panel-heading">
+            <span className="overview-panel-eyebrow">ACTIVITY</span>
 
             <h2>Recent Bookings</h2>
+
+            <p>The latest customer booking requests.</p>
           </div>
 
-          <span className="dashboard-panel-count">{bookings.length} Total</span>
+          <div className="overview-panel-count">
+            <strong>{bookings.length}</strong>
+
+            <span>Total</span>
+          </div>
         </div>
 
+        {/* =================================================
+            EMPTY STATE
+        ================================================== */}
+
         {recentBookings.length === 0 ? (
-          <div className="dashboard-empty">
-            <span>▣</span>
+          <div className="overview-empty">
+            <div className="overview-empty-icon">▣</div>
+
             <h3>No bookings yet</h3>
+
             <p>Customer booking requests will appear here.</p>
           </div>
         ) : (
-          <div className="dashboard-table-wrapper">
-            <table className="dashboard-table">
+          /* =================================================
+             BOOKINGS TABLE
+          ================================================= */
+
+          <div className="overview-table-container">
+            <table className="overview-table">
               <thead>
                 <tr>
                   <th>BOOKING</th>
@@ -165,35 +238,52 @@ const DashboardOverview = () => {
               <tbody>
                 {recentBookings.map((booking) => (
                   <tr key={booking.id}>
-                    <td>
-                      <strong>{booking.id}</strong>
-                    </td>
+                    {/* BOOKING */}
 
                     <td>
-                      <div className="dashboard-customer">
-                        <strong>{booking.name}</strong>
-                        <span>{booking.email}</span>
+                      <div className="overview-booking-id">
+                        <strong>{booking.id}</strong>
                       </div>
                     </td>
 
+                    {/* CUSTOMER */}
+
                     <td>
-                      <div className="dashboard-journey">
-                        <span>{booking.pickup}</span>
-                        <small>↓</small>
-                        <span>{booking.destination}</span>
+                      <div className="overview-customer">
+                        <strong>{booking.name || '-'}</strong>
+
+                        <span>{booking.email || '-'}</span>
                       </div>
                     </td>
 
+                    {/* JOURNEY */}
+
                     <td>
-                      <div className="dashboard-date">
+                      <div className="overview-journey">
+                        <span>{booking.pickup || '-'}</span>
+
+                        <span className="overview-journey-arrow">↓</span>
+
+                        <span>{booking.destination || '-'}</span>
+                      </div>
+                    </td>
+
+                    {/* DATE */}
+
+                    <td>
+                      <div className="overview-date">
                         <strong>{formatDate(booking.travelDate)}</strong>
 
                         <span>{booking.travelTime || '-'}</span>
                       </div>
                     </td>
 
+                    {/* STATUS */}
+
                     <td>
-                      <span className={`dashboard-status-badge ${booking.status}`}>
+                      <span className={`overview-status ${booking.status || 'pending'}`}>
+                        <span className="overview-status-dot"></span>
+
                         {booking.status || 'pending'}
                       </span>
                     </td>
@@ -204,7 +294,7 @@ const DashboardOverview = () => {
           </div>
         )}
       </section>
-    </div>
+    </main>
   );
 };
 
