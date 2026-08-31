@@ -27,6 +27,13 @@ const EmailSent = () => {
   const [replySuccess, setReplySuccess] = useState('');
 
   /* =========================================================
+     DELETE STATE
+  ========================================================= */
+
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+
+  /* =========================================================
      HANDLE AUTH FAILURE
   ========================================================= */
 
@@ -51,20 +58,12 @@ const EmailSent = () => {
       setLoading(true);
       setError('');
 
-      /* =====================================================
-         GET JWT TOKEN
-      ===================================================== */
-
       const token = localStorage.getItem('adminToken');
 
       if (!token) {
         handleUnauthorized();
         return;
       }
-
-      /* =====================================================
-         GET SENT EMAILS
-      ===================================================== */
 
       const response = await fetch(`${API_URL}/api/emails/sent`, {
         method: 'GET',
@@ -74,18 +73,10 @@ const EmailSent = () => {
         },
       });
 
-      /* =====================================================
-         TOKEN EXPIRED / INVALID
-      ===================================================== */
-
       if (response.status === 401) {
         handleUnauthorized();
         return;
       }
-
-      /* =====================================================
-         OTHER BACKEND ERRORS
-      ===================================================== */
 
       if (!response.ok) {
         let message = 'Unable to load sent emails.';
@@ -97,15 +88,11 @@ const EmailSent = () => {
             message = data.message;
           }
         } catch {
-          // Ignore invalid JSON response
+          // Ignore invalid JSON
         }
 
         throw new Error(message);
       }
-
-      /* =====================================================
-         READ RESPONSE
-      ===================================================== */
 
       const data = await response.json();
 
@@ -205,6 +192,7 @@ const EmailSent = () => {
     setReplyMessage('');
     setReplyError('');
     setReplySuccess('');
+    setDeleteError('');
   };
 
   /* =========================================================
@@ -212,7 +200,7 @@ const EmailSent = () => {
   ========================================================= */
 
   const closeEmail = () => {
-    if (replySending) {
+    if (replySending || deleteLoading) {
       return;
     }
 
@@ -222,6 +210,7 @@ const EmailSent = () => {
     setReplyMessage('');
     setReplyError('');
     setReplySuccess('');
+    setDeleteError('');
   };
 
   /* =========================================================
@@ -229,7 +218,7 @@ const EmailSent = () => {
   ========================================================= */
 
   const startReply = () => {
-    if (!selectedEmail) {
+    if (!selectedEmail || deleteLoading) {
       return;
     }
 
@@ -237,6 +226,7 @@ const EmailSent = () => {
     setReplyMessage('');
     setReplyError('');
     setReplySuccess('');
+    setDeleteError('');
   };
 
   /* =========================================================
@@ -251,7 +241,6 @@ const EmailSent = () => {
     setReplyMode(false);
     setReplyMessage('');
     setReplyError('');
-    setReplySuccess('');
   };
 
   /* =========================================================
@@ -265,27 +254,15 @@ const EmailSent = () => {
       return;
     }
 
-    /* =======================================================
-       VALIDATE RECIPIENT
-    ======================================================= */
-
     if (!selectedEmail.email) {
       setReplyError('This email does not have a valid recipient address.');
       return;
     }
 
-    /* =======================================================
-       VALIDATE MESSAGE
-    ======================================================= */
-
     if (!replyMessage.trim()) {
       setReplyError('Please enter a reply message.');
       return;
     }
-
-    /* =======================================================
-       AUTH TOKEN
-    ======================================================= */
 
     const token = localStorage.getItem('adminToken');
 
@@ -299,26 +276,11 @@ const EmailSent = () => {
       setReplyError('');
       setReplySuccess('');
 
-      /* =====================================================
-         REPLY SUBJECT
-      ===================================================== */
-
       const originalSubject = selectedEmail.subject || 'Your Greens Shuttle enquiry';
 
       const replySubject = originalSubject.toLowerCase().startsWith('re:')
         ? originalSubject
         : `Re: ${originalSubject}`;
-
-      /* =====================================================
-         FORM DATA
-
-         IMPORTANT:
-         We use FormData because the send endpoint can
-         also accept attachments.
-
-         DO NOT set Content-Type manually.
-         The browser sets multipart/form-data automatically.
-      ===================================================== */
 
       const formData = new FormData();
 
@@ -327,10 +289,6 @@ const EmailSent = () => {
       formData.append('subject', replySubject);
       formData.append('message', replyMessage.trim());
 
-      /* =====================================================
-         SELECT SENDER MAILBOX
-      ===================================================== */
-
       const sender =
         selectedEmail.from ||
         (selectedEmail.mailbox === 'bookings'
@@ -338,10 +296,6 @@ const EmailSent = () => {
           : 'info@greensshuttle.co.za');
 
       formData.append('from', sender);
-
-      /* =====================================================
-         SEND REPLY
-      ===================================================== */
 
       const response = await fetch(`${API_URL}/api/emails/send`, {
         method: 'POST',
@@ -353,18 +307,10 @@ const EmailSent = () => {
         body: formData,
       });
 
-      /* =====================================================
-         TOKEN EXPIRED / INVALID
-      ===================================================== */
-
       if (response.status === 401) {
         handleUnauthorized();
         return;
       }
-
-      /* =====================================================
-         READ BACKEND RESPONSE
-      ===================================================== */
 
       let data = {};
 
@@ -374,32 +320,16 @@ const EmailSent = () => {
         data = {};
       }
 
-      /* =====================================================
-         BACKEND ERROR
-      ===================================================== */
-
       if (!response.ok || data.success === false) {
         throw new Error(data.message || 'Unable to send reply.');
       }
-
-      /* =====================================================
-         SUCCESS
-      ===================================================== */
 
       setReplySuccess(data.message || 'Reply sent successfully.');
 
       setReplyMessage('');
       setReplyMode(false);
 
-      /* =====================================================
-         REFRESH SENT EMAILS
-      ===================================================== */
-
       await loadSentEmails();
-
-      /* =====================================================
-         KEEP MODAL OPEN
-      ===================================================== */
 
       if (data.email) {
         setSelectedEmail(data.email);
@@ -410,6 +340,94 @@ const EmailSent = () => {
       setReplyError(err?.message || 'Unable to send reply.');
     } finally {
       setReplySending(false);
+    }
+  };
+
+  /* =========================================================
+     DELETE SENT EMAIL
+  ========================================================= */
+
+  const deleteEmail = async () => {
+    if (!selectedEmail) {
+      return;
+    }
+
+    if (replySending || deleteLoading) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Are you sure you want to delete this sent email?\n\n"${selectedEmail.subject || 'No Subject'}"\n\nThis action cannot be undone.`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    const token = localStorage.getItem('adminToken');
+
+    if (!token) {
+      handleUnauthorized();
+      return;
+    }
+
+    try {
+      setDeleteLoading(true);
+      setDeleteError('');
+      setError('');
+
+      const response = await fetch(
+        `${API_URL}/api/emails/${encodeURIComponent(selectedEmail.id)}`,
+        {
+          method: 'DELETE',
+
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.status === 401) {
+        handleUnauthorized();
+        return;
+      }
+
+      let data = {};
+
+      try {
+        data = await response.json();
+      } catch {
+        data = {};
+      }
+
+      if (!response.ok || data.success === false) {
+        throw new Error(data.message || 'Unable to delete email.');
+      }
+
+      /* ================================================
+         REMOVE EMAIL FROM CURRENT LIST
+      ================================================= */
+
+      setEmails((currentEmails) =>
+        currentEmails.filter((email) => String(email.id) !== String(selectedEmail.id))
+      );
+
+      /* ================================================
+         CLOSE MODAL
+      ================================================= */
+
+      setSelectedEmail(null);
+      setReplyMode(false);
+      setReplyMessage('');
+      setReplyError('');
+      setReplySuccess('');
+      setDeleteError('');
+    } catch (err) {
+      console.error('Delete email error:', err);
+
+      setDeleteError(err?.message || 'Unable to delete email.');
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -440,7 +458,6 @@ const EmailSent = () => {
       {error && (
         <div className="email-sent-error">
           <span>!</span>
-
           <p>{error}</p>
         </div>
       )}
@@ -455,7 +472,6 @@ const EmailSent = () => {
 
           <div>
             <span>Total Sent</span>
-
             <strong>{emails.length}</strong>
           </div>
         </div>
@@ -465,7 +481,6 @@ const EmailSent = () => {
 
           <div>
             <span>With Attachments</span>
-
             <strong>{attachmentCount}</strong>
           </div>
         </div>
@@ -475,7 +490,6 @@ const EmailSent = () => {
 
           <div>
             <span>Showing</span>
-
             <strong>{filteredEmails.length}</strong>
           </div>
         </div>
@@ -486,8 +500,6 @@ const EmailSent = () => {
       ====================================================== */}
 
       <section className="email-sent-panel">
-        {/* PANEL HEADER */}
-
         <div className="email-sent-panel-header">
           <div>
             <span className="email-sent-eyebrow">EMAILS</span>
@@ -497,7 +509,12 @@ const EmailSent = () => {
             <p>View emails sent from the Greens Shuttle dashboard.</p>
           </div>
 
-          <button type="button" className="email-sent-refresh" onClick={loadSentEmails}>
+          <button
+            type="button"
+            className="email-sent-refresh"
+            onClick={loadSentEmails}
+            disabled={loading}
+          >
             ↻ Refresh
           </button>
         </div>
@@ -518,7 +535,7 @@ const EmailSent = () => {
             />
 
             {search && (
-              <button type="button" onClick={() => setSearch('')}>
+              <button type="button" onClick={() => setSearch('')} aria-label="Clear search">
                 ×
               </button>
             )}
@@ -550,13 +567,9 @@ const EmailSent = () => {
                 className="email-sent-item"
                 onClick={() => openEmail(email)}
               >
-                {/* AVATAR */}
-
                 <div className="email-sent-avatar">
                   {(email.name || email.email || 'G').charAt(0).toUpperCase()}
                 </div>
-
-                {/* CONTENT */}
 
                 <div className="email-sent-item-content">
                   <div className="email-sent-item-top">
@@ -582,8 +595,6 @@ const EmailSent = () => {
                   </div>
                 </div>
 
-                {/* ARROW */}
-
                 <div className="email-sent-arrow">›</div>
               </button>
             ))}
@@ -598,9 +609,7 @@ const EmailSent = () => {
       {selectedEmail && (
         <div className="email-sent-modal-overlay" onClick={closeEmail}>
           <div className="email-sent-modal" onClick={(event) => event.stopPropagation()}>
-            {/* =================================================
-                HEADER
-            ================================================== */}
+            {/* HEADER */}
 
             <div className="email-sent-modal-header">
               <div>
@@ -613,15 +622,14 @@ const EmailSent = () => {
                 type="button"
                 className="email-sent-close"
                 onClick={closeEmail}
-                disabled={replySending}
+                disabled={replySending || deleteLoading}
+                aria-label="Close email"
               >
                 ×
               </button>
             </div>
 
-            {/* =================================================
-                RECIPIENT
-            ================================================== */}
+            {/* RECIPIENT */}
 
             <div className="email-sent-recipient">
               <div className="email-sent-avatar large">
@@ -637,15 +645,15 @@ const EmailSent = () => {
               </div>
             </div>
 
-            {/* =================================================
-                SUCCESS
-            ================================================== */}
+            {/* SUCCESS */}
 
             {replySuccess && <div className="email-sent-reply-success">✓ {replySuccess}</div>}
 
-            {/* =================================================
-                ORIGINAL MESSAGE
-            ================================================== */}
+            {/* DELETE ERROR */}
+
+            {deleteError && <div className="email-sent-reply-error">! {deleteError}</div>}
+
+            {/* ORIGINAL MESSAGE */}
 
             <div className="email-sent-message">
               <span className="email-sent-eyebrow">MESSAGE</span>
@@ -655,9 +663,7 @@ const EmailSent = () => {
               </div>
             </div>
 
-            {/* =================================================
-                ATTACHMENTS
-            ================================================== */}
+            {/* ATTACHMENTS */}
 
             <div className="email-sent-attachments">
               <span className="email-sent-eyebrow">ATTACHMENTS</span>
@@ -735,12 +741,13 @@ const EmailSent = () => {
                 </div>
               </form>
             ) : (
-              /* =================================================
-                 ACTIONS
-              ================================================== */
-
               <div className="email-sent-modal-actions">
-                <button type="button" className="email-sent-reply" onClick={startReply}>
+                <button
+                  type="button"
+                  className="email-sent-reply"
+                  onClick={startReply}
+                  disabled={deleteLoading}
+                >
                   ↩ Reply
                 </button>
 
@@ -748,7 +755,25 @@ const EmailSent = () => {
                   Open Mail App
                 </a>
 
-                <button type="button" className="email-sent-secondary" onClick={closeEmail}>
+                {/* =================================================
+                    DELETE BUTTON
+                ================================================== */}
+
+                <button
+                  type="button"
+                  className="email-sent-delete"
+                  onClick={deleteEmail}
+                  disabled={deleteLoading}
+                >
+                  {deleteLoading ? 'Deleting...' : 'Delete'}
+                </button>
+
+                <button
+                  type="button"
+                  className="email-sent-secondary"
+                  onClick={closeEmail}
+                  disabled={deleteLoading}
+                >
                   Close
                 </button>
               </div>

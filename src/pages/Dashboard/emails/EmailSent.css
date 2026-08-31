@@ -225,6 +225,11 @@
   transform: translateY(1px);
 }
 
+.email-sent-refresh:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* =========================================================
    TOOLBAR
 ========================================================= */
@@ -626,11 +631,16 @@
   transition: all 0.2s ease;
 }
 
-.email-sent-close:hover {
+.email-sent-close:hover:not(:disabled) {
   background: #72d101;
   border-color: #72d101;
   color: #002800;
   transform: rotate(90deg);
+}
+
+.email-sent-close:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* =========================================================
@@ -775,10 +785,10 @@
 }
 
 /* =========================================================
-   REPLY SECTION
+   REPLY FORM
 ========================================================= */
 
-.email-sent-reply-box {
+.email-sent-reply-form {
   margin: 20px 25px 5px;
   padding: 18px;
   border: 1px solid #dfe7db;
@@ -795,15 +805,27 @@
   margin-bottom: 12px;
 }
 
-.email-sent-reply-title {
-  color: #002800;
-  font-size: 11px;
-  font-weight: 800;
+.email-sent-reply-header > div {
+  min-width: 0;
 }
 
-.email-sent-reply-to {
+.email-sent-reply-header strong {
+  display: block;
+  margin-top: 4px;
+  color: #002800;
+  font-size: 9px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.email-sent-reply-header > span {
+  flex-shrink: 0;
+  max-width: 45%;
+  overflow: hidden;
   color: #899289;
   font-size: 8px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .email-sent-reply-textarea {
@@ -836,51 +858,12 @@
   color: #a1aaa0;
 }
 
-.email-sent-reply-footer {
+.email-sent-reply-actions {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  justify-content: flex-end;
+  gap: 8px;
   margin-top: 10px;
-}
-
-.email-sent-reply-info {
-  color: #899289;
-  font-size: 8px;
-  line-height: 1.5;
-}
-
-.email-sent-reply-send {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 35px;
-  padding: 8px 16px;
-  border: 1px solid #72d101;
-  border-radius: 8px;
-  background: #72d101;
-  color: #002800;
-  font-family: inherit;
-  font-size: 8px;
-  font-weight: 900;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.email-sent-reply-send:hover {
-  border-color: #002800;
-  background: #002800;
-  color: #ffffff;
-}
-
-.email-sent-reply-send:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.email-sent-reply-send:active:not(:disabled) {
-  transform: translateY(1px);
 }
 
 /* =========================================================
@@ -889,11 +872,15 @@
 
 .email-sent-reply-error,
 .email-sent-reply-success {
-  margin-top: 9px;
+  margin: 10px 25px;
   padding: 9px 11px;
   border-radius: 7px;
   font-size: 8px;
   line-height: 1.5;
+}
+
+.email-sent-reply-form .email-sent-reply-error {
+  margin: 9px 0 0;
 }
 
 .email-sent-reply-error {
@@ -949,7 +936,7 @@
   color: #002800;
 }
 
-.email-sent-reply:hover {
+.email-sent-reply:hover:not(:disabled) {
   border-color: #002800;
   background: #002800;
   color: #ffffff;
@@ -961,11 +948,15 @@
   color: #ffffff;
 }
 
-.email-sent-secondary:hover {
+.email-sent-secondary:hover:not(:disabled) {
   border-color: #72d101;
   background: #72d101;
   color: #002800;
 }
+
+/* =========================================================
+   DELETE BUTTON
+========================================================= */
 
 .email-sent-delete {
   border: 1px solid #e2caca;
@@ -973,10 +964,18 @@
   color: #a32929;
 }
 
-.email-sent-delete:hover {
+.email-sent-delete:hover:not(:disabled) {
   border-color: #a32929;
   background: #a32929;
   color: #ffffff;
+}
+
+.email-sent-delete:disabled,
+.email-sent-reply:disabled,
+.email-sent-secondary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
 }
 
 /* =========================================================
@@ -1018,7 +1017,7 @@
     max-height: calc(100vh - 36px);
   }
 
-  .email-sent-reply-box {
+  .email-sent-reply-form {
     margin-left: 20px;
     margin-right: 20px;
   }
@@ -1099,7 +1098,9 @@
     display: none;
   }
 
-  /* MODAL */
+  /* =======================================================
+     MODAL
+  ======================================================= */
 
   .email-sent-modal-overlay {
     align-items: flex-start;
@@ -1156,9 +1157,11 @@
     padding: 17px 12px 5px;
   }
 
-  /* REPLY */
+  /* =======================================================
+     REPLY
+  ======================================================= */
 
-  .email-sent-reply-box {
+  .email-sent-reply-form {
     margin: 17px 12px 5px;
     padding: 14px;
   }
@@ -1169,20 +1172,26 @@
     gap: 5px;
   }
 
+  .email-sent-reply-header > span {
+    max-width: 100%;
+  }
+
   .email-sent-reply-textarea {
     min-height: 140px;
   }
 
-  .email-sent-reply-footer {
+  .email-sent-reply-actions {
     align-items: stretch;
     flex-direction: column;
   }
 
-  .email-sent-reply-send {
+  .email-sent-reply-actions button {
     width: 100%;
   }
 
-  /* ACTIONS */
+  /* =======================================================
+     ACTIONS
+  ======================================================= */
 
   .email-sent-modal-actions {
     flex-direction: column;
@@ -1264,7 +1273,7 @@
     padding-right: 9px;
   }
 
-  .email-sent-reply-box {
+  .email-sent-reply-form {
     margin-left: 9px;
     margin-right: 9px;
     padding: 12px;
@@ -1311,7 +1320,7 @@
     padding-right: 36px;
   }
 
-  .email-sent-reply-box {
+  .email-sent-reply-form {
     margin-left: 7px;
     margin-right: 7px;
     padding: 10px;
