@@ -124,51 +124,71 @@ export const markSentEmailAsRead = (id) => {
 ========================================================= */
 
 export const deleteSentEmail = (id) => {
-  const emails = readSentEmails();
+  try {
+    const emails = readSentEmails();
 
-  const emailIndex = emails.findIndex((item) => String(item.id) === String(id));
+    const emailIndex = emails.findIndex(
+      (item) => String(item.id) === String(id),
+    );
 
-  if (emailIndex === -1) {
-    return false;
-  }
+    /* =====================================================
+       EMAIL NOT FOUND
+    ===================================================== */
 
-  const deletedEmail = emails[emailIndex];
+    if (emailIndex === -1) {
+      return false;
+    }
 
-  /* =====================================================
-     DELETE ATTACHMENTS
-  ===================================================== */
+    const deletedEmail = emails[emailIndex];
 
-  if (Array.isArray(deletedEmail.attachments)) {
-    deletedEmail.attachments.forEach((attachment) => {
-      if (!attachment.filename) {
-        return;
-      }
+    /* =====================================================
+       DELETE ATTACHMENTS
+    ===================================================== */
 
-      const filePath = path.join(uploadsDir, attachment.filename);
+    if (Array.isArray(deletedEmail.attachments)) {
+      for (const attachment of deletedEmail.attachments) {
+        if (!attachment?.filename) {
+          continue;
+        }
 
-      if (fs.existsSync(filePath)) {
+        const attachmentPath = path.join(uploadsDir, attachment.filename);
+
         try {
-          fs.unlinkSync(filePath);
+          if (fs.existsSync(attachmentPath)) {
+            fs.unlinkSync(attachmentPath);
 
-          console.log(`✓ Deleted attachment: ${attachment.filename}`);
-        } catch (error) {
-          console.error("Attachment delete error:", error);
+            console.log(`✓ Deleted attachment: ${attachment.filename}`);
+          }
+        } catch (attachmentError) {
+          /*
+             Do not stop email deletion if an attachment
+             cannot be deleted.
+          */
+
+          console.error(
+            `Attachment delete error (${attachment.filename}):`,
+            attachmentError,
+          );
         }
       }
-    });
+    }
+
+    /* =====================================================
+       REMOVE EMAIL FROM JSON
+    ===================================================== */
+
+    emails.splice(emailIndex, 1);
+
+    writeSentEmails(emails);
+
+    console.log(`✓ Deleted sent email: ${deletedEmail.id}`);
+
+    return true;
+  } catch (error) {
+    console.error("Delete sent email error:", error);
+
+    throw error;
   }
-
-  /* =====================================================
-     REMOVE EMAIL
-  ===================================================== */
-
-  emails.splice(emailIndex, 1);
-
-  writeSentEmails(emails);
-
-  console.log(`✓ Deleted sent email: ${deletedEmail.id}`);
-
-  return true;
 };
 
 /* =========================================================

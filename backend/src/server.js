@@ -23,7 +23,13 @@ const PORT = process.env.PORT || 5000;
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:3000",
+      "https://greensshuttle.co.za",
+      "https://www.greensshuttle.co.za",
+    ],
+    credentials: true,
   }),
 );
 
@@ -62,13 +68,12 @@ app.use("/api/reviews", reviewRoutes);
    START SERVER
 ========================================================= */
 
-app.listen(PORT, async () => {
+app.listen(PORT, "0.0.0.0", async () => {
   console.log("");
   console.log("==========================================");
   console.log("   GREENS SHUTTLE BACKEND");
   console.log("==========================================");
   console.log(`Server running on port ${PORT}`);
-  console.log(`http://localhost:${PORT}`);
   console.log("==========================================");
   console.log("");
 
@@ -76,5 +81,10 @@ app.listen(PORT, async () => {
      TEST EMAIL CONNECTIONS
   ======================================================== */
 
-  await verifyEmailConnections();
+  try {
+    await verifyEmailConnections();
+  } catch (error) {
+    console.error("Email connection verification failed:");
+    console.error(error.message);
+  }
 });
