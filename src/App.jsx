@@ -2,6 +2,7 @@ import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import ProtectedRoute from './components/ProtectedRoute';
 
 // =====================================================
 // PUBLIC PAGES
@@ -15,6 +16,7 @@ import Gallery from './pages/Gallery';
 import Contact from './pages/Contact';
 import Booking from './pages/Booking';
 import NotFound from './pages/NotFound';
+import Login from './pages/Login';
 
 // =====================================================
 // DASHBOARD
@@ -26,8 +28,6 @@ import Bookings from './pages/Dashboard/Bookings';
 import Contacts from './pages/Dashboard/Contacts';
 import Quotes from './pages/Dashboard/Quotes';
 import Documents from './pages/Dashboard/Documents';
-import EmailAttachments from './pages/Dashboard/emails/EmailAttachments';
-import EmailCompose from './pages/Dashboard/emails/EmailCompose';
 
 // =====================================================
 // DASHBOARD — EMAILS
@@ -35,6 +35,8 @@ import EmailCompose from './pages/Dashboard/emails/EmailCompose';
 
 import EmailInbox from './pages/Dashboard/emails/EmailInbox';
 import EmailSent from './pages/Dashboard/emails/EmailSent';
+import EmailAttachments from './pages/Dashboard/emails/EmailAttachments';
+import EmailCompose from './pages/Dashboard/emails/EmailCompose';
 
 // =====================================================
 // APP
@@ -44,22 +46,29 @@ export default function App() {
   const location = useLocation();
 
   // =====================================================
-  // HIDE PUBLIC NAVBAR + FOOTER ON DASHBOARD
+  // PAGE TYPE
   // =====================================================
 
   const isDashboard = location.pathname.startsWith('/dashboard');
+  const isLogin = location.pathname === '/login';
+
+  // =====================================================
+  // HIDE PUBLIC NAVBAR / FOOTER
+  // =====================================================
+
+  const showPublicLayout = !isDashboard && !isLogin;
 
   return (
     <>
-      {/* =====================================================
+      {/* =================================================
           PUBLIC NAVBAR
-      ===================================================== */}
+      ================================================= */}
 
-      {!isDashboard && <Navbar />}
+      {showPublicLayout && <Navbar />}
 
-      {/* =====================================================
+      {/* =================================================
           ROUTES
-      ===================================================== */}
+      ================================================= */}
 
       <main>
         <Routes>
@@ -82,95 +91,106 @@ export default function App() {
           <Route path="/booking" element={<Booking />} />
 
           {/* =================================================
-              DASHBOARD
+              ADMIN LOGIN
           ================================================= */}
 
-          <Route path="/dashboard" element={<Dashboard />}>
-            {/* -----------------------------------------------
-                OVERVIEW
-                /dashboard
-            ------------------------------------------------ */}
+          <Route path="/login" element={<Login />} />
 
-            <Route index element={<DashboardOverview />} />
+          {/* =================================================
+              PROTECTED ADMIN DASHBOARD
+          ================================================= */}
 
-            {/* -----------------------------------------------
-                BOOKINGS
-                /dashboard/bookings
-            ------------------------------------------------ */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/dashboard" element={<Dashboard />}>
+              {/* -----------------------------------------------
+                  DASHBOARD OVERVIEW
 
-            <Route path="bookings" element={<Bookings />} />
+                  /dashboard
+              ------------------------------------------------ */}
 
-            {/* -----------------------------------------------
-                CONTACTS
-                /dashboard/contacts
-            ------------------------------------------------ */}
+              <Route index element={<DashboardOverview />} />
 
-            <Route path="contacts" element={<Contacts />} />
+              {/* -----------------------------------------------
+                  BOOKINGS
 
-            {/* -----------------------------------------------
-                QUOTES
-                /dashboard/quotes
-            ------------------------------------------------ */}
+                  /dashboard/bookings
+              ------------------------------------------------ */}
 
-            <Route path="quotes" element={<Quotes />} />
+              <Route path="bookings" element={<Bookings />} />
 
-            {/* -----------------------------------------------
-                DOCUMENTS
-                /dashboard/documents
-            ------------------------------------------------ */}
+              {/* -----------------------------------------------
+                  CONTACTS
 
-            <Route path="documents" element={<Documents />} />
+                  /dashboard/contacts
+              ------------------------------------------------ */}
 
-            {/* =================================================
-                EMAILS
-            ================================================== */}
+              <Route path="contacts" element={<Contacts />} />
 
-            {/* -----------------------------------------------
-                EMAILS → REDIRECT TO INBOX
+              {/* -----------------------------------------------
+                  QUOTES
 
-                /dashboard/emails
-                    ↓
-                /dashboard/emails/inbox
-            ------------------------------------------------ */}
+                  /dashboard/quotes
+              ------------------------------------------------ */}
 
-            <Route path="emails" element={<Navigate to="/dashboard/emails/inbox" replace />} />
+              <Route path="quotes" element={<Quotes />} />
 
-            {/* -----------------------------------------------
-                EMAIL INBOX
-                /dashboard/emails/inbox
-            ------------------------------------------------ */}
+              {/* -----------------------------------------------
+                  DOCUMENTS
 
-            <Route path="emails/inbox" element={<EmailInbox />} />
+                  /dashboard/documents
+              ------------------------------------------------ */}
 
-            {/* -----------------------------------------------
-                SENT EMAILS
-                /dashboard/emails/sent
-            ------------------------------------------------ */}
+              <Route path="documents" element={<Documents />} />
 
-            <Route path="emails/sent" element={<EmailSent />} />
+              {/* =================================================
+                  EMAILS
+              ================================================= */}
 
-            {/* -----------------------------------------------
-                EMAIL ATTACHMENTS
+              {/* -----------------------------------------------
+                  /dashboard/emails
 
-                Add EmailAttachments later when the component
-                has been created.
-            ------------------------------------------------ */}
+                  Redirect to inbox
+              ------------------------------------------------ */}
 
-            <Route path="emails/attachments" element={<EmailAttachments />} />
+              <Route path="emails" element={<Navigate to="/dashboard/emails/inbox" replace />} />
 
-            {/* -----------------------------------------------
-                COMPOSE EMAIL
+              {/* -----------------------------------------------
+                  EMAIL INBOX
 
-                Add EmailCompose later when the component
-                has been created.
-            ------------------------------------------------ */}
+                  /dashboard/emails/inbox
+              ------------------------------------------------ */}
 
-            <Route path="emails/compose" element={<EmailCompose />} />
+              <Route path="emails/inbox" element={<EmailInbox />} />
+
+              {/* -----------------------------------------------
+                  SENT EMAILS
+
+                  /dashboard/emails/sent
+              ------------------------------------------------ */}
+
+              <Route path="emails/sent" element={<EmailSent />} />
+
+              {/* -----------------------------------------------
+                  EMAIL ATTACHMENTS
+
+                  /dashboard/emails/attachments
+              ------------------------------------------------ */}
+
+              <Route path="emails/attachments" element={<EmailAttachments />} />
+
+              {/* -----------------------------------------------
+                  COMPOSE EMAIL
+
+                  /dashboard/emails/compose
+              ------------------------------------------------ */}
+
+              <Route path="emails/compose" element={<EmailCompose />} />
+            </Route>
           </Route>
 
           {/* =================================================
-              404 — PAGE NOT FOUND
-          ================================================== */}
+              404
+          ================================================= */}
 
           <Route path="*" element={<NotFound />} />
         </Routes>
@@ -180,7 +200,7 @@ export default function App() {
           PUBLIC FOOTER
       ===================================================== */}
 
-      {!isDashboard && <Footer />}
+      {showPublicLayout && <Footer />}
     </>
   );
 }

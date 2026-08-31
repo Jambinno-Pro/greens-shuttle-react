@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { UserRound } from 'lucide-react';
 
 const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -12,28 +13,55 @@ const Navbar = () => {
     <header className="navbar">
       <div className="container">
         <div className="navbar-inner">
-          {/* LOGO */}
+          {/* =====================================================
+              LOGO
+          ====================================================== */}
+
           <Link to="/" className="navbar-logo" onClick={closeMenu}>
             <img src="/images/GREENS-TRANSPORT-logo.png" alt="Greens Shuttle" />
           </Link>
 
-          {/* DESKTOP NAVIGATION */}
+          {/* =====================================================
+              DESKTOP NAVIGATION
+          ====================================================== */}
+
           <nav className="navbar-links">
             <Link to="/">Home</Link>
             <Link to="/services">Services</Link>
             <Link to="/destinations">Destinations</Link>
             <Link to="/about">About</Link>
-            <Link to="/gallery">Gallery</Link>
             <Link to="/contact">Contact</Link>
           </nav>
 
-          {/* DESKTOP BOOKING BUTTON */}
+          {/* =====================================================
+              DESKTOP ADMIN LOGIN
+              Positioned between Contact and Booking button
+          ====================================================== */}
+
+          <Link
+            to="/login"
+            className="navbar-login"
+            onClick={closeMenu}
+            aria-label="Admin Login"
+            title="Admin Login"
+          >
+            <UserRound size={21} strokeWidth={2} />
+          </Link>
+
+          {/* =====================================================
+              DESKTOP BOOKING BUTTON
+          ====================================================== */}
+
           <Link to="/booking" className="navbar-book">
             <span>BOOK YOUR JOURNEY</span>
+
             <span className="navbar-book-arrow">→</span>
           </Link>
 
-          {/* MOBILE MENU BUTTON */}
+          {/* =====================================================
+              MOBILE MENU BUTTON
+          ====================================================== */}
+
           <button
             type="button"
             className={`navbar-menu ${menuOpen ? 'active' : ''}`}
@@ -46,7 +74,10 @@ const Navbar = () => {
           </button>
         </div>
 
-        {/* MOBILE NAVIGATION */}
+        {/* =====================================================
+            MOBILE NAVIGATION
+        ====================================================== */}
+
         <nav className={`mobile-nav ${menuOpen ? 'open' : ''}`}>
           <Link to="/" onClick={closeMenu}>
             Home
@@ -64,10 +95,6 @@ const Navbar = () => {
             About
           </Link>
 
-          <Link to="/gallery" onClick={closeMenu}>
-            Gallery
-          </Link>
-
           <Link to="/contact" onClick={closeMenu}>
             Contact
           </Link>
@@ -75,6 +102,17 @@ const Navbar = () => {
           <Link to="/booking" className="mobile-booking" onClick={closeMenu}>
             <span>BOOK YOUR JOURNEY</span>
             <span>→</span>
+          </Link>
+
+          {/* =====================================================
+              MOBILE ADMIN LOGIN
+              Kept inside the mobile menu
+          ====================================================== */}
+
+          <Link to="/login" className="mobile-login" onClick={closeMenu}>
+            <UserRound size={18} strokeWidth={2} />
+
+            <span>Admin Login</span>
           </Link>
         </nav>
       </div>

@@ -43,6 +43,74 @@ p {
   font-weight: 600;
 }
 
+/* =========================================================
+   ADMIN LOGIN ICON
+========================================================= */
+
+.navbar-login {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 40px;
+  height: 40px;
+
+  margin-left: 18px;
+  margin-right: 14px;
+
+  color: #ffffff;
+  text-decoration: none;
+
+  border-radius: 50%;
+
+  transition:
+    transform 0.25s ease,
+    opacity 0.25s ease;
+}
+
+.navbar-login:hover {
+  transform: translateY(-2px);
+  opacity: 0.8;
+}
+
+.navbar-login svg {
+  color: #ffffff;
+  stroke: #ffffff;
+}
+
+/* =========================================================
+   MOBILE ADMIN LOGIN
+========================================================= */
+
+.mobile-login {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  color: #ffffff;
+  text-decoration: none;
+}
+
+.mobile-login svg {
+  color: #ffffff;
+  stroke: #ffffff;
+}
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 900px) {
+  /*
+    Desktop login icon becomes hidden because
+    the mobile menu contains its own Admin Login.
+  */
+
+  .navbar-login {
+    display: none;
+  }
+}
+
 /* Buttons */
 .btn {
   font-family: Helvetica, Arial, sans-serif;

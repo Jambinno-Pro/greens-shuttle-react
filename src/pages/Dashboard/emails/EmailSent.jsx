@@ -1,15 +1,17 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import './EmailSent.css';
 
 const API_URL = 'http://localhost:5000';
 
 const EmailSent = () => {
+  const navigate = useNavigate();
+
   const [emails, setEmails] = useState([]);
   const [selectedEmail, setSelectedEmail] = useState(null);
 
   const [loading, setLoading] = useState(true);
-
   const [error, setError] = useState('');
 
   const [search, setSearch] = useState('');
@@ -19,14 +21,26 @@ const EmailSent = () => {
   ========================================================= */
 
   const [replyMode, setReplyMode] = useState(false);
-
   const [replyMessage, setReplyMessage] = useState('');
-
   const [replySending, setReplySending] = useState(false);
-
   const [replyError, setReplyError] = useState('');
-
   const [replySuccess, setReplySuccess] = useState('');
+
+  /* =========================================================
+     HANDLE AUTH FAILURE
+  ========================================================= */
+
+  const handleUnauthorized = () => {
+    localStorage.removeItem('adminToken');
+    localStorage.removeItem('adminUser');
+
+    navigate('/login', {
+      state: {
+        from: '/dashboard/emails/sent',
+      },
+      replace: true,
+    });
+  };
 
   /* =========================================================
      LOAD SENT EMAILS
@@ -37,23 +51,77 @@ const EmailSent = () => {
       setLoading(true);
       setError('');
 
-      const response = await fetch(`${API_URL}/api/emails/sent`);
+      /* =====================================================
+         GET JWT TOKEN
+      ===================================================== */
+
+      const token = localStorage.getItem('adminToken');
+
+      if (!token) {
+        handleUnauthorized();
+        return;
+      }
+
+      /* =====================================================
+         GET SENT EMAILS
+      ===================================================== */
+
+      const response = await fetch(`${API_URL}/api/emails/sent`, {
+        method: 'GET',
+
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      /* =====================================================
+         TOKEN EXPIRED / INVALID
+      ===================================================== */
+
+      if (response.status === 401) {
+        handleUnauthorized();
+        return;
+      }
+
+      /* =====================================================
+         OTHER BACKEND ERRORS
+      ===================================================== */
 
       if (!response.ok) {
-        throw new Error('Unable to load sent emails.');
+        let message = 'Unable to load sent emails.';
+
+        try {
+          const data = await response.json();
+
+          if (data?.message) {
+            message = data.message;
+          }
+        } catch {
+          // Ignore invalid JSON response
+        }
+
+        throw new Error(message);
       }
+
+      /* =====================================================
+         READ RESPONSE
+      ===================================================== */
 
       const data = await response.json();
 
-      setEmails(data.emails || []);
+      setEmails(Array.isArray(data.emails) ? data.emails : []);
     } catch (err) {
       console.error('Sent emails error:', err);
 
-      setError('Unable to load sent emails.');
+      setError(err?.message || 'Unable to load sent emails.');
     } finally {
       setLoading(false);
     }
   };
+
+  /* =========================================================
+     INITIAL LOAD
+  ========================================================= */
 
   useEffect(() => {
     loadSentEmails();
@@ -85,7 +153,7 @@ const EmailSent = () => {
   ========================================================= */
 
   const attachmentCount = emails.filter(
-    (email) => email.attachments && email.attachments.length > 0
+    (email) => Array.isArray(email.attachments) && email.attachments.length > 0
   ).length;
 
   /* =========================================================
@@ -95,7 +163,13 @@ const EmailSent = () => {
   const formatDate = (date) => {
     if (!date) return '-';
 
-    return new Date(date).toLocaleDateString('en-ZA', {
+    const parsedDate = new Date(date);
+
+    if (Number.isNaN(parsedDate.getTime())) {
+      return '-';
+    }
+
+    return parsedDate.toLocaleDateString('en-ZA', {
       day: '2-digit',
       month: 'short',
       year: 'numeric',
@@ -105,7 +179,13 @@ const EmailSent = () => {
   const formatDateTime = (date) => {
     if (!date) return '-';
 
-    return new Date(date).toLocaleString('en-ZA', {
+    const parsedDate = new Date(date);
+
+    if (Number.isNaN(parsedDate.getTime())) {
+      return '-';
+    }
+
+    return parsedDate.toLocaleString('en-ZA', {
       day: '2-digit',
       month: 'short',
       year: 'numeric',
@@ -122,11 +202,8 @@ const EmailSent = () => {
     setSelectedEmail(email);
 
     setReplyMode(false);
-
     setReplyMessage('');
-
     setReplyError('');
-
     setReplySuccess('');
   };
 
@@ -135,16 +212,15 @@ const EmailSent = () => {
   ========================================================= */
 
   const closeEmail = () => {
-    if (replySending) return;
+    if (replySending) {
+      return;
+    }
 
     setSelectedEmail(null);
 
     setReplyMode(false);
-
     setReplyMessage('');
-
     setReplyError('');
-
     setReplySuccess('');
   };
 
@@ -153,15 +229,14 @@ const EmailSent = () => {
   ========================================================= */
 
   const startReply = () => {
-    if (!selectedEmail) return;
+    if (!selectedEmail) {
+      return;
+    }
 
     setReplyMode(true);
-
-    setReplyError('');
-
-    setReplySuccess('');
-
     setReplyMessage('');
+    setReplyError('');
+    setReplySuccess('');
   };
 
   /* =========================================================
@@ -169,14 +244,13 @@ const EmailSent = () => {
   ========================================================= */
 
   const cancelReply = () => {
-    if (replySending) return;
+    if (replySending) {
+      return;
+    }
 
     setReplyMode(false);
-
     setReplyMessage('');
-
     setReplyError('');
-
     setReplySuccess('');
   };
 
@@ -191,30 +265,45 @@ const EmailSent = () => {
       return;
     }
 
+    /* =======================================================
+       VALIDATE RECIPIENT
+    ======================================================= */
+
     if (!selectedEmail.email) {
       setReplyError('This email does not have a valid recipient address.');
-
       return;
     }
 
+    /* =======================================================
+       VALIDATE MESSAGE
+    ======================================================= */
+
     if (!replyMessage.trim()) {
       setReplyError('Please enter a reply message.');
+      return;
+    }
 
+    /* =======================================================
+       AUTH TOKEN
+    ======================================================= */
+
+    const token = localStorage.getItem('adminToken');
+
+    if (!token) {
+      handleUnauthorized();
       return;
     }
 
     try {
       setReplySending(true);
-
       setReplyError('');
-
       setReplySuccess('');
 
       /* =====================================================
          REPLY SUBJECT
       ===================================================== */
 
-      const originalSubject = selectedEmail.subject || 'No Subject';
+      const originalSubject = selectedEmail.subject || 'Your Greens Shuttle enquiry';
 
       const replySubject = originalSubject.toLowerCase().startsWith('re:')
         ? originalSubject
@@ -222,38 +311,74 @@ const EmailSent = () => {
 
       /* =====================================================
          FORM DATA
+
+         IMPORTANT:
+         We use FormData because the send endpoint can
+         also accept attachments.
+
+         DO NOT set Content-Type manually.
+         The browser sets multipart/form-data automatically.
       ===================================================== */
 
       const formData = new FormData();
 
       formData.append('email', selectedEmail.email);
-
       formData.append('name', selectedEmail.name || '');
-
       formData.append('subject', replySubject);
-
       formData.append('message', replyMessage.trim());
 
-      /*
-        Use the same Greens Shuttle sender.
-        This is important because the backend
-        selects the correct SMTP mailbox.
-      */
+      /* =====================================================
+         SELECT SENDER MAILBOX
+      ===================================================== */
 
-      formData.append('from', selectedEmail.from || 'info@greensshuttle.co.za');
+      const sender =
+        selectedEmail.from ||
+        (selectedEmail.mailbox === 'bookings'
+          ? 'bookings@greensshuttle.co.za'
+          : 'info@greensshuttle.co.za');
+
+      formData.append('from', sender);
 
       /* =====================================================
-         SEND
+         SEND REPLY
       ===================================================== */
 
       const response = await fetch(`${API_URL}/api/emails/send`, {
         method: 'POST',
+
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+
         body: formData,
       });
 
-      const data = await response.json();
+      /* =====================================================
+         TOKEN EXPIRED / INVALID
+      ===================================================== */
 
-      if (!response.ok || !data.success) {
+      if (response.status === 401) {
+        handleUnauthorized();
+        return;
+      }
+
+      /* =====================================================
+         READ BACKEND RESPONSE
+      ===================================================== */
+
+      let data = {};
+
+      try {
+        data = await response.json();
+      } catch {
+        data = {};
+      }
+
+      /* =====================================================
+         BACKEND ERROR
+      ===================================================== */
+
+      if (!response.ok || data.success === false) {
         throw new Error(data.message || 'Unable to send reply.');
       }
 
@@ -261,28 +386,28 @@ const EmailSent = () => {
          SUCCESS
       ===================================================== */
 
-      setReplySuccess('Reply sent successfully.');
+      setReplySuccess(data.message || 'Reply sent successfully.');
 
       setReplyMessage('');
-
       setReplyMode(false);
 
-      /*
-        Reload Sent Mail so the reply immediately
-        appears in the list.
-      */
+      /* =====================================================
+         REFRESH SENT EMAILS
+      ===================================================== */
 
       await loadSentEmails();
 
-      /*
-        Keep the modal open.
-      */
+      /* =====================================================
+         KEEP MODAL OPEN
+      ===================================================== */
 
-      setSelectedEmail(data.email || selectedEmail);
+      if (data.email) {
+        setSelectedEmail(data.email);
+      }
     } catch (err) {
       console.error('Reply error:', err);
 
-      setReplyError(err.message || 'Unable to send reply.');
+      setReplyError(err?.message || 'Unable to send reply.');
     } finally {
       setReplySending(false);
     }
@@ -361,6 +486,8 @@ const EmailSent = () => {
       ====================================================== */}
 
       <section className="email-sent-panel">
+        {/* PANEL HEADER */}
+
         <div className="email-sent-panel-header">
           <div>
             <span className="email-sent-eyebrow">EMAILS</span>
@@ -423,9 +550,13 @@ const EmailSent = () => {
                 className="email-sent-item"
                 onClick={() => openEmail(email)}
               >
+                {/* AVATAR */}
+
                 <div className="email-sent-avatar">
                   {(email.name || email.email || 'G').charAt(0).toUpperCase()}
                 </div>
+
+                {/* CONTENT */}
 
                 <div className="email-sent-item-content">
                   <div className="email-sent-item-top">
@@ -443,13 +574,15 @@ const EmailSent = () => {
                   <div className="email-sent-item-meta">
                     <span>To: {email.email || '-'}</span>
 
-                    {email.attachments && email.attachments.length > 0 && (
+                    {Array.isArray(email.attachments) && email.attachments.length > 0 && (
                       <span className="email-sent-attachment-count">
                         📎 {email.attachments.length}
                       </span>
                     )}
                   </div>
                 </div>
+
+                {/* ARROW */}
 
                 <div className="email-sent-arrow">›</div>
               </button>
@@ -476,7 +609,12 @@ const EmailSent = () => {
                 <h2>{selectedEmail.subject || 'No Subject'}</h2>
               </div>
 
-              <button type="button" className="email-sent-close" onClick={closeEmail}>
+              <button
+                type="button"
+                className="email-sent-close"
+                onClick={closeEmail}
+                disabled={replySending}
+              >
                 ×
               </button>
             </div>
@@ -524,7 +662,7 @@ const EmailSent = () => {
             <div className="email-sent-attachments">
               <span className="email-sent-eyebrow">ATTACHMENTS</span>
 
-              {selectedEmail.attachments && selectedEmail.attachments.length > 0 ? (
+              {Array.isArray(selectedEmail.attachments) && selectedEmail.attachments.length > 0 ? (
                 <div className="email-sent-attachment-list">
                   {selectedEmail.attachments.map((attachment, index) => (
                     <a

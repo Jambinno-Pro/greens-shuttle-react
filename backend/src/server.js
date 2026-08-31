@@ -8,8 +8,10 @@ import bookingRoutes from "./routes/bookingRoutes.js";
 import contactRoutes from "./routes/contactRoutes.js";
 import emailRoutes from "./routes/emailRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
 
 import { verifyEmailConnections } from "./services/emailService.js";
+import authMiddleware from "./middleware/authMiddleware.js";
 
 const app = express();
 
@@ -44,13 +46,15 @@ app.get("/api/health", (req, res) => {
    API ROUTES
 ========================================================= */
 
+app.use("/api/auth", authRoutes);
+
 app.use("/api/quotes", quoteRoutes);
 
 app.use("/api/bookings", bookingRoutes);
 
 app.use("/api/contact", contactRoutes);
 
-app.use("/api/emails", emailRoutes);
+app.use("/api/emails", authMiddleware, emailRoutes);
 
 app.use("/api/reviews", reviewRoutes);
 

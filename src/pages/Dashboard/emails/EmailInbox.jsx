@@ -6,19 +6,41 @@ const API_URL = 'http://localhost:5000';
 const EmailInbox = () => {
   const [emails, setEmails] = useState([]);
   const [selectedEmail, setSelectedEmail] = useState(null);
+  const [replyEmail, setReplyEmail] = useState(null);
+
+  const [replyMessage, setReplyMessage] = useState('');
+  const [sendingReply, setSendingReply] = useState(false);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
 
   /* =========================================================
-     NORMALIZE EMAIL DATA
+     AUTHENTICATION
+  ========================================================= */
+
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('adminToken');
+
+    return {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    };
+  };
+
+  /* =========================================================
+     NORMALIZE EMAIL
   ========================================================= */
 
   const normalizeEmail = (email, mailbox) => {
     return {
       ...email,
 
+      // Create a unique frontend ID because both mailboxes
+      // can contain the same IMAP UID.
       id: `${mailbox}-${email.id}`,
 
       originalId: email.id,
@@ -32,14 +54,47 @@ const EmailInbox = () => {
   };
 
   /* =========================================================
-     LOAD ONE INBOX
+     LOAD ONE MAILBOX
   ========================================================= */
 
   const loadMailbox = async (mailbox) => {
-    const response = await fetch(`${API_URL}/api/emails/inbox?mailbox=${mailbox}`);
+    const token = localStorage.getItem('adminToken');
+
+    if (!token) {
+      throw new Error('Authentication required. Please sign in again.');
+    }
+
+    const response = await fetch(
+      `${API_URL}/api/emails/inbox?mailbox=${encodeURIComponent(mailbox)}`,
+      {
+        method: 'GET',
+        headers: getAuthHeaders(),
+      }
+    );
+
+    if (response.status === 401) {
+      localStorage.removeItem('adminToken');
+      localStorage.removeItem('adminUser');
+
+      window.location.href = '/login';
+
+      throw new Error('Your session has expired. Please sign in again.');
+    }
 
     if (!response.ok) {
-      throw new Error(`Unable to load ${mailbox} inbox.`);
+      let message = `Unable to load ${mailbox} inbox.`;
+
+      try {
+        const data = await response.json();
+
+        if (data?.message) {
+          message = data.message;
+        }
+      } catch {
+        // Ignore invalid JSON
+      }
+
+      throw new Error(message);
     }
 
     const data = await response.json();
@@ -59,6 +114,7 @@ const EmailInbox = () => {
     try {
       setLoading(true);
       setError('');
+      setSuccess('');
 
       const [infoEmails, bookingsEmails] = await Promise.all([
         loadMailbox('info'),
@@ -151,10 +207,13 @@ const EmailInbox = () => {
   };
 
   /* =========================================================
-     OPEN EMAIL
+     OPEN CUSTOMER EMAIL
   ========================================================= */
 
-  const openEmail = async (email) => {
+  const openEmail = (email) => {
+    setError('');
+    setSuccess('');
+
     setSelectedEmail({
       ...email,
       status: 'read',
@@ -171,23 +230,197 @@ const EmailInbox = () => {
             : item
         )
       );
-
-      /*
-        Real IMAP read-status update will be connected
-        here next.
-
-        The important difference is that the backend
-        needs to know which mailbox the email belongs to.
-      */
     }
   };
 
   /* =========================================================
-     CLOSE EMAIL
+     CLOSE CUSTOMER EMAIL
   ========================================================= */
 
   const closeEmail = () => {
     setSelectedEmail(null);
+  };
+
+  /* =========================================================
+     GET CUSTOMER RECIPIENT
+  ========================================================= */
+
+  const getRecipientEmail = (email) => {
+    if (!email) return '';
+
+    return String(email.email || email.senderEmail || email.from || email.sender || '').trim();
+  };
+
+  /* =========================================================
+     OPEN REPLY POPUP
+  ========================================================= */
+
+  const openReply = (email) => {
+    setError('');
+    setSuccess('');
+
+    const recipient = getRecipientEmail(email);
+
+    if (!recipient) {
+      setError('This customer email does not contain a valid email address.');
+
+      return;
+    }
+
+    /*
+     * Keep the complete original email object.
+     *
+     * This is important because the reply popup needs:
+     * - customer email
+     * - customer name
+     * - subject
+     * - mailbox
+     * - message
+     * - attachments
+     */
+
+    setReplyEmail({
+      ...email,
+      email: recipient,
+    });
+
+    setReplyMessage('');
+    setSelectedEmail(null);
+  };
+
+  /* =========================================================
+     CLOSE REPLY POPUP
+  ========================================================= */
+
+  const closeReply = () => {
+    if (sendingReply) return;
+
+    setReplyEmail(null);
+    setReplyMessage('');
+  };
+
+  /* =========================================================
+     SEND REPLY
+  ========================================================= */
+
+  const sendReply = async (event) => {
+    event.preventDefault();
+
+    if (!replyEmail) {
+      return;
+    }
+
+    /*
+     * Get the customer's actual email address.
+     */
+
+    const recipient = getRecipientEmail(replyEmail);
+
+    if (!recipient) {
+      setError('Recipient email is required.');
+      return;
+    }
+
+    if (!replyMessage.trim()) {
+      setError('Please enter a message before sending.');
+      return;
+    }
+
+    try {
+      setSendingReply(true);
+      setError('');
+      setSuccess('');
+
+      const subject = `Re: ${replyEmail.subject || 'Your email'}`;
+
+      /*
+       * IMPORTANT:
+       *
+       * The backend /api/emails/send route expects:
+       *
+       *     email
+       *
+       * NOT:
+       *
+       *     to
+       *
+       * We therefore send the customer's address
+       * using the "email" property.
+       *
+       * We also explicitly send the correct mailbox
+       * so the SMTP sender remains connected to the
+       * correct cPanel mailbox.
+       */
+
+      const from =
+        replyEmail.mailbox === 'bookings'
+          ? 'bookings@greensshuttle.co.za'
+          : 'info@greensshuttle.co.za';
+
+      const response = await fetch(`${API_URL}/api/emails/send`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+
+        body: JSON.stringify({
+          email: recipient,
+          subject,
+          message: replyMessage.trim(),
+          from,
+        }),
+      });
+
+      /* =====================================================
+         AUTHENTICATION ERROR
+      ===================================================== */
+
+      if (response.status === 401) {
+        localStorage.removeItem('adminToken');
+        localStorage.removeItem('adminUser');
+
+        window.location.href = '/login';
+
+        return;
+      }
+
+      /* =====================================================
+         READ RESPONSE
+      ===================================================== */
+
+      let data = {};
+
+      try {
+        data = await response.json();
+      } catch {
+        data = {};
+      }
+
+      /* =====================================================
+         BACKEND ERROR
+      ===================================================== */
+
+      if (!response.ok) {
+        throw new Error(data?.message || data?.error || 'Unable to send reply.');
+      }
+
+      /* =====================================================
+         SUCCESS
+      ===================================================== */
+
+      setReplyEmail(null);
+      setReplyMessage('');
+
+      setSuccess('Reply sent successfully.');
+
+      setTimeout(() => {
+        setSuccess('');
+      }, 4000);
+    } catch (err) {
+      console.error('Reply error:', err);
+
+      setError(err?.message || 'Unable to send reply.');
+    } finally {
+      setSendingReply(false);
+    }
   };
 
   /* =========================================================
@@ -211,11 +444,11 @@ const EmailInbox = () => {
   return (
     <main className="email-inbox-page">
       {/* =====================================================
-          PAGE HEADER
+          HEADER
       ====================================================== */}
 
       <section className="email-inbox-header">
-        <div>
+        <div className="email-inbox-header-content">
           <span className="email-inbox-eyebrow">EMAILS</span>
 
           <h1>Inbox</h1>
@@ -229,14 +462,34 @@ const EmailInbox = () => {
       </section>
 
       {/* =====================================================
+          SUCCESS
+      ====================================================== */}
+
+      {success && (
+        <div className="email-inbox-success">
+          <div className="email-inbox-success-icon">✓</div>
+
+          <p>{success}</p>
+
+          <button type="button" onClick={() => setSuccess('')}>
+            ×
+          </button>
+        </div>
+      )}
+
+      {/* =====================================================
           ERROR
       ====================================================== */}
 
       {error && (
         <div className="email-inbox-error">
-          <span>!</span>
+          <div className="email-inbox-error-icon">!</div>
 
           <p>{error}</p>
+
+          <button type="button" onClick={() => setError('')}>
+            ×
+          </button>
         </div>
       )}
 
@@ -245,32 +498,29 @@ const EmailInbox = () => {
       ====================================================== */}
 
       <section className="email-inbox-stats">
-        <div className="email-inbox-stat-card">
+        <div className="email-inbox-stat-card email-inbox-stat-total">
           <div className="email-inbox-stat-icon">✉</div>
 
-          <div>
+          <div className="email-inbox-stat-content">
             <span>Total Emails</span>
-
             <strong>{emails.length}</strong>
           </div>
         </div>
 
-        <div className="email-inbox-stat-card">
+        <div className="email-inbox-stat-card email-inbox-stat-unread">
           <div className="email-inbox-stat-icon">●</div>
 
-          <div>
+          <div className="email-inbox-stat-content">
             <span>Unread</span>
-
             <strong>{unreadCount}</strong>
           </div>
         </div>
 
-        <div className="email-inbox-stat-card">
+        <div className="email-inbox-stat-card email-inbox-stat-attachments">
           <div className="email-inbox-stat-icon">📎</div>
 
-          <div>
+          <div className="email-inbox-stat-content">
             <span>With Attachments</span>
-
             <strong>{attachmentCount}</strong>
           </div>
         </div>
@@ -281,24 +531,26 @@ const EmailInbox = () => {
       ====================================================== */}
 
       <section className="email-inbox-panel">
-        {/* PANEL HEADER */}
-
         <div className="email-inbox-panel-header">
-          <div>
+          <div className="email-inbox-panel-heading">
             <span className="email-inbox-panel-eyebrow">CUSTOMER MESSAGES</span>
 
             <h2>Inbox</h2>
           </div>
 
           <span className="email-inbox-count">
-            {filteredEmails.length} email
-            {filteredEmails.length === 1 ? '' : 's'}
+            <strong>{filteredEmails.length}</strong>
+
+            <span>
+              email
+              {filteredEmails.length === 1 ? '' : 's'}
+            </span>
           </span>
         </div>
 
-        {/* =================================================
+        {/* ===================================================
             TOOLBAR
-        ================================================== */}
+        ==================================================== */}
 
         <div className="email-inbox-toolbar">
           <div className="email-inbox-search">
@@ -312,7 +564,7 @@ const EmailInbox = () => {
             />
 
             {search && (
-              <button type="button" onClick={() => setSearch('')}>
+              <button type="button" onClick={() => setSearch('')} aria-label="Clear search">
                 ×
               </button>
             )}
@@ -353,9 +605,9 @@ const EmailInbox = () => {
           </div>
         </div>
 
-        {/* =================================================
+        {/* ===================================================
             EMAIL LIST
-        ================================================== */}
+        ==================================================== */}
 
         {filteredEmails.length === 0 ? (
           <div className="email-inbox-empty">
@@ -378,13 +630,9 @@ const EmailInbox = () => {
                 className={`email-inbox-item ${email.status === 'unread' ? 'unread' : ''}`}
                 onClick={() => openEmail(email)}
               >
-                {/* AVATAR */}
-
                 <div className="email-inbox-avatar">
                   {(email.name || email.email || 'G').charAt(0).toUpperCase()}
                 </div>
-
-                {/* MAIN CONTENT */}
 
                 <div className="email-inbox-item-content">
                   <div className="email-inbox-item-top">
@@ -410,8 +658,6 @@ const EmailInbox = () => {
                   </div>
                 </div>
 
-                {/* STATUS */}
-
                 <div className="email-inbox-item-status">
                   {email.status === 'unread' && <span className="email-inbox-unread-dot"></span>}
 
@@ -424,14 +670,12 @@ const EmailInbox = () => {
       </section>
 
       {/* =====================================================
-          EMAIL MODAL
+          CUSTOMER EMAIL MODAL
       ====================================================== */}
 
       {selectedEmail && (
         <div className="email-inbox-modal-overlay" onClick={closeEmail}>
           <div className="email-inbox-modal" onClick={(event) => event.stopPropagation()}>
-            {/* MODAL HEADER */}
-
             <div className="email-inbox-modal-header">
               <div>
                 <span className="email-inbox-panel-eyebrow">CUSTOMER EMAIL</span>
@@ -454,11 +698,9 @@ const EmailInbox = () => {
               <div>
                 <strong>{selectedEmail.name || 'Unknown Sender'}</strong>
 
-                <a href={`mailto:${selectedEmail.email}`}>{selectedEmail.email || '-'}</a>
+                <a href={`mailto:${selectedEmail.email || ''}`}>{selectedEmail.email || '-'}</a>
 
                 <span>{formatDateTime(selectedEmail.createdAt)}</span>
-
-                {/* MAILBOX */}
 
                 <span>
                   To:{' '}
@@ -508,19 +750,119 @@ const EmailInbox = () => {
             {/* ACTIONS */}
 
             <div className="email-inbox-modal-actions">
-              <a
-                href={`mailto:${selectedEmail.email}?subject=${encodeURIComponent(
-                  `Re: ${selectedEmail.subject || 'Your email'}`
-                )}`}
+              <button
+                type="button"
                 className="email-inbox-reply"
+                onClick={() => openReply(selectedEmail)}
               >
                 Reply to Customer
-              </a>
+              </button>
 
               <button type="button" className="email-inbox-secondary" onClick={closeEmail}>
                 Close
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* =====================================================
+          REPLY MODAL
+      ====================================================== */}
+
+      {replyEmail && (
+        <div className="email-reply-overlay" onClick={closeReply}>
+          <div className="email-reply-modal" onClick={(event) => event.stopPropagation()}>
+            {/* REPLY HEADER */}
+
+            <div className="email-reply-header">
+              <div className="email-reply-heading">
+                <span className="email-reply-eyebrow">REPLY</span>
+
+                <h2>Reply to Customer</h2>
+              </div>
+
+              <button
+                type="button"
+                className="email-reply-close"
+                onClick={closeReply}
+                disabled={sendingReply}
+                aria-label="Close reply"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* REPLY FORM */}
+
+            <form className="email-reply-form" onSubmit={sendReply}>
+              {/* TO */}
+
+              <div className="email-reply-field">
+                <label htmlFor="reply-to">To</label>
+
+                <div className="email-reply-input">
+                  <input
+                    id="reply-to"
+                    type="email"
+                    value={getRecipientEmail(replyEmail)}
+                    readOnly
+                  />
+                </div>
+              </div>
+
+              {/* SUBJECT */}
+
+              <div className="email-reply-field">
+                <label htmlFor="reply-subject">Subject</label>
+
+                <div className="email-reply-input">
+                  <input
+                    id="reply-subject"
+                    type="text"
+                    value={`Re: ${replyEmail.subject || 'Your email'}`}
+                    readOnly
+                  />
+                </div>
+              </div>
+
+              {/* MESSAGE */}
+
+              <div className="email-reply-field">
+                <label htmlFor="reply-message">Message</label>
+
+                <textarea
+                  id="reply-message"
+                  value={replyMessage}
+                  onChange={(event) => setReplyMessage(event.target.value)}
+                  placeholder="Write your reply to the customer..."
+                  rows={8}
+                  autoFocus
+                  disabled={sendingReply}
+                />
+              </div>
+
+              {/* ACTIONS */}
+
+              <div className="email-reply-actions">
+                <button
+                  type="button"
+                  className="email-reply-cancel"
+                  onClick={closeReply}
+                  disabled={sendingReply}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  className="email-reply-send"
+                  disabled={sendingReply || !replyMessage.trim() || !getRecipientEmail(replyEmail)}
+                >
+                  {sendingReply ? 'Sending...' : 'Send Reply'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

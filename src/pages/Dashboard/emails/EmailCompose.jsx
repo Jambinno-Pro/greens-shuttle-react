@@ -108,8 +108,31 @@ const EmailCompose = () => {
       return;
     }
 
+    /* =====================================================
+     CHECK ADMIN TOKEN
+  ===================================================== */
+
+    const token = localStorage.getItem('adminToken');
+
+    if (!token) {
+      setMessage('Authentication required. Please sign in again.');
+      setMessageType('error');
+
+      navigate('/login', {
+        state: {
+          from: '/dashboard/emails/compose',
+        },
+      });
+
+      return;
+    }
+
     try {
       setSending(true);
+
+      /* =====================================================
+       FORM DATA
+    ===================================================== */
 
       const formData = new FormData();
 
@@ -117,22 +140,69 @@ const EmailCompose = () => {
       formData.append('email', form.email.trim());
       formData.append('name', form.name.trim());
       formData.append('subject', form.subject.trim());
-      formData.append('message', form.message);
+      formData.append('message', form.message.trim());
 
       attachments.forEach((file) => {
         formData.append('attachments', file);
       });
 
+      /* =====================================================
+       SEND EMAIL
+    ===================================================== */
+
       const response = await fetch(`${API_URL}/api/emails/send`, {
         method: 'POST',
+
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+
         body: formData,
       });
 
-      const data = await response.json();
+      /* =====================================================
+       RESPONSE
+    ===================================================== */
+
+      let data = {};
+
+      try {
+        data = await response.json();
+      } catch {
+        data = {};
+      }
+
+      /* =====================================================
+       TOKEN EXPIRED / INVALID
+    ===================================================== */
+
+      if (response.status === 401) {
+        localStorage.removeItem('adminToken');
+        localStorage.removeItem('adminUser');
+
+        setMessage('Your session has expired. Please sign in again.');
+        setMessageType('error');
+
+        navigate('/login', {
+          state: {
+            from: '/dashboard/emails/compose',
+          },
+        });
+
+        return;
+      }
+
+      /* =====================================================
+       OTHER BACKEND ERROR
+    ===================================================== */
 
       if (!response.ok) {
         throw new Error(data.message || 'Unable to send email.');
       }
+
+      /* =====================================================
+       SUCCESS
+    ===================================================== */
 
       setMessage(data.message || 'Email sent successfully.');
       setMessageType('success');
