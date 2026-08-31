@@ -48,6 +48,52 @@ app.get("/api/health", (req, res) => {
   });
 });
 
+app.get("/api/email-network-test", async (req, res) => {
+  const net = await import("net");
+
+  const host = process.env.MAIL_HOST;
+  const port = Number(process.env.MAIL_SMTP_PORT) || 465;
+
+  const socket = new net.Socket();
+
+  socket.setTimeout(10000);
+
+  socket.on("connect", () => {
+    socket.destroy();
+
+    res.json({
+      success: true,
+      host,
+      port,
+      message: "Render can reach the SMTP server.",
+    });
+  });
+
+  socket.on("timeout", () => {
+    socket.destroy();
+
+    res.status(504).json({
+      success: false,
+      host,
+      port,
+      message: "Connection timed out.",
+    });
+  });
+
+  socket.on("error", (error) => {
+    socket.destroy();
+
+    res.status(500).json({
+      success: false,
+      host,
+      port,
+      message: error.message,
+    });
+  });
+
+  socket.connect(port, host);
+});
+
 /* =========================================================
    API ROUTES
 ========================================================= */
