@@ -13,12 +13,6 @@ const bookingsFile = path.join(__dirname, "../../data/bookings.json");
 
 export const createBooking = (req, res) => {
   try {
-    /*
-      Because multer is processing the request,
-      normal form fields are available through req.body
-      and the uploaded proof is available through req.file.
-    */
-
     const {
       pickup,
       destination,
@@ -101,12 +95,64 @@ export const createBooking = (req, res) => {
       const fileContents = fs.readFileSync(bookingsFile, "utf8");
 
       bookings = fileContents ? JSON.parse(fileContents) : [];
+
+      if (!Array.isArray(bookings)) {
+        bookings = [];
+      }
     } catch (error) {
       console.error("Unable to read bookings.json:", error);
 
       bookings = [];
     }
 
+    /* =====================================================
+   GENERATE PROFESSIONAL BOOKING ID
+
+   IMPORTANT:
+   Only IDs using the new 6-digit format are counted.
+
+   Old IDs such as:
+   BK-1788124050360
+
+   are completely ignored.
+===================================================== */
+
+    let highestBookingNumber = 0;
+
+    bookings.forEach((booking) => {
+      if (!booking?.id) return;
+
+      const id = String(booking.id).trim();
+
+      /*
+    Only accept the new format:
+
+    BK-000001
+    BK-000002
+    BK-000127
+
+    Old timestamp IDs will NOT match this pattern.
+  */
+      const match = id.match(/^BK-(\d{6})$/);
+
+      if (!match) return;
+
+      const number = Number(match[1]);
+
+      if (Number.isInteger(number) && number > highestBookingNumber) {
+        highestBookingNumber = number;
+      }
+    });
+
+    /*
+  Start at BK-000001 if no professional
+  booking IDs exist yet.
+*/
+    const nextBookingNumber = highestBookingNumber + 1;
+
+    const bookingId = `BK-${String(nextBookingNumber).padStart(6, "0")}`;
+
+    console.log("NEW BOOKING ID:", bookingId);
     /* =====================================================
        PROOF FILE INFORMATION
     ===================================================== */
@@ -128,7 +174,7 @@ export const createBooking = (req, res) => {
     ===================================================== */
 
     const booking = {
-      id: `BK-${Date.now()}`,
+      id: bookingId,
 
       type: "booking",
 
@@ -182,9 +228,7 @@ export const createBooking = (req, res) => {
 
     return res.status(201).json({
       success: true,
-
       message: "Booking request received successfully.",
-
       booking,
     });
   } catch (error) {
@@ -192,7 +236,6 @@ export const createBooking = (req, res) => {
 
     return res.status(500).json({
       success: false,
-
       message: error.message || "Unable to process booking request.",
     });
   }
@@ -204,10 +247,6 @@ export const createBooking = (req, res) => {
 
 export const getBookings = (req, res) => {
   try {
-    /* =====================================================
-       MAKE SURE DATA DIRECTORY EXISTS
-    ===================================================== */
-
     const dataDirectory = path.dirname(bookingsFile);
 
     if (!fs.existsSync(dataDirectory)) {
@@ -216,25 +255,13 @@ export const getBookings = (req, res) => {
       });
     }
 
-    /* =====================================================
-       MAKE SURE BOOKINGS FILE EXISTS
-    ===================================================== */
-
     if (!fs.existsSync(bookingsFile)) {
       fs.writeFileSync(bookingsFile, "[]");
     }
 
-    /* =====================================================
-       READ BOOKINGS
-    ===================================================== */
-
     const fileContents = fs.readFileSync(bookingsFile, "utf8");
 
     const bookings = fileContents ? JSON.parse(fileContents) : [];
-
-    /* =====================================================
-       RESPONSE
-    ===================================================== */
 
     return res.json({
       success: true,
@@ -246,6 +273,172 @@ export const getBookings = (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Unable to load bookings.",
+    });
+  }
+};
+
+/* =========================================================
+   UPDATE BOOKING STATUS
+========================================================= */
+
+export const updateBookingStatus = (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body || {};
+
+    /* =====================================================
+       ALLOWED STATUSES
+    ===================================================== */
+
+    const allowedStatuses = ["pending", "in-progress", "completed"];
+
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid booking status.",
+      });
+    }
+
+    /* =====================================================
+       MAKE SURE BOOKINGS FILE EXISTS
+    ===================================================== */
+
+    if (!fs.existsSync(bookingsFile)) {
+      return res.status(404).json({
+        success: false,
+        message: "Bookings file not found.",
+      });
+    }
+
+    /* =====================================================
+       READ BOOKINGS
+    ===================================================== */
+
+    const fileContents = fs.readFileSync(bookingsFile, "utf8");
+
+    const bookings = fileContents ? JSON.parse(fileContents) : [];
+
+    /* =====================================================
+       FIND BOOKING
+    ===================================================== */
+
+    const bookingIndex = bookings.findIndex(
+      (booking) => String(booking.id) === String(id),
+    );
+
+    if (bookingIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        message: "Booking not found.",
+      });
+    }
+
+    /* =====================================================
+       UPDATE STATUS
+    ===================================================== */
+
+    bookings[bookingIndex].status = status;
+
+    /* =====================================================
+       SAVE
+    ===================================================== */
+
+    fs.writeFileSync(bookingsFile, JSON.stringify(bookings, null, 2));
+
+    console.log(`BOOKING STATUS UPDATED: ${id} → ${status}`);
+
+    /* =====================================================
+       RESPONSE
+    ===================================================== */
+
+    return res.json({
+      success: true,
+      message: "Booking status updated successfully.",
+      booking: bookings[bookingIndex],
+    });
+  } catch (error) {
+    console.error("Update booking status error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Unable to update booking status.",
+    });
+  }
+};
+
+/* =========================================================
+   DELETE BOOKING
+========================================================= */
+
+export const deleteBooking = (req, res) => {
+  try {
+    const { id } = req.params;
+
+    /* =====================================================
+       MAKE SURE BOOKINGS FILE EXISTS
+    ===================================================== */
+
+    if (!fs.existsSync(bookingsFile)) {
+      return res.status(404).json({
+        success: false,
+        message: "Bookings file not found.",
+      });
+    }
+
+    /* =====================================================
+       READ BOOKINGS
+    ===================================================== */
+
+    const fileContents = fs.readFileSync(bookingsFile, "utf8");
+
+    const bookings = fileContents ? JSON.parse(fileContents) : [];
+
+    /* =====================================================
+       FIND BOOKING
+    ===================================================== */
+
+    const bookingIndex = bookings.findIndex(
+      (booking) => String(booking.id) === String(id),
+    );
+
+    if (bookingIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        message: "Booking not found.",
+      });
+    }
+
+    /* =====================================================
+       REMOVE BOOKING
+    ===================================================== */
+
+    const deletedBooking = bookings[bookingIndex];
+
+    bookings.splice(bookingIndex, 1);
+
+    /* =====================================================
+       SAVE UPDATED BOOKINGS
+    ===================================================== */
+
+    fs.writeFileSync(bookingsFile, JSON.stringify(bookings, null, 2));
+
+    console.log(`BOOKING DELETED: ${deletedBooking.id}`);
+
+    /* =====================================================
+       RESPONSE
+    ===================================================== */
+
+    return res.json({
+      success: true,
+      message: "Booking deleted successfully.",
+      booking: deletedBooking,
+    });
+  } catch (error) {
+    console.error("Delete booking error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Unable to delete booking.",
     });
   }
 };

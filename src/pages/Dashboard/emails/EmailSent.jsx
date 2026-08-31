@@ -7,9 +7,26 @@ const API_URL = 'http://localhost:5000';
 const EmailSent = () => {
   const [emails, setEmails] = useState([]);
   const [selectedEmail, setSelectedEmail] = useState(null);
+
   const [loading, setLoading] = useState(true);
+
   const [error, setError] = useState('');
+
   const [search, setSearch] = useState('');
+
+  /* =========================================================
+     REPLY STATE
+  ========================================================= */
+
+  const [replyMode, setReplyMode] = useState(false);
+
+  const [replyMessage, setReplyMessage] = useState('');
+
+  const [replySending, setReplySending] = useState(false);
+
+  const [replyError, setReplyError] = useState('');
+
+  const [replySuccess, setReplySuccess] = useState('');
 
   /* =========================================================
      LOAD SENT EMAILS
@@ -103,6 +120,14 @@ const EmailSent = () => {
 
   const openEmail = (email) => {
     setSelectedEmail(email);
+
+    setReplyMode(false);
+
+    setReplyMessage('');
+
+    setReplyError('');
+
+    setReplySuccess('');
   };
 
   /* =========================================================
@@ -110,7 +135,157 @@ const EmailSent = () => {
   ========================================================= */
 
   const closeEmail = () => {
+    if (replySending) return;
+
     setSelectedEmail(null);
+
+    setReplyMode(false);
+
+    setReplyMessage('');
+
+    setReplyError('');
+
+    setReplySuccess('');
+  };
+
+  /* =========================================================
+     START REPLY
+  ========================================================= */
+
+  const startReply = () => {
+    if (!selectedEmail) return;
+
+    setReplyMode(true);
+
+    setReplyError('');
+
+    setReplySuccess('');
+
+    setReplyMessage('');
+  };
+
+  /* =========================================================
+     CANCEL REPLY
+  ========================================================= */
+
+  const cancelReply = () => {
+    if (replySending) return;
+
+    setReplyMode(false);
+
+    setReplyMessage('');
+
+    setReplyError('');
+
+    setReplySuccess('');
+  };
+
+  /* =========================================================
+     SEND REPLY
+  ========================================================= */
+
+  const sendReply = async (event) => {
+    event.preventDefault();
+
+    if (!selectedEmail) {
+      return;
+    }
+
+    if (!selectedEmail.email) {
+      setReplyError('This email does not have a valid recipient address.');
+
+      return;
+    }
+
+    if (!replyMessage.trim()) {
+      setReplyError('Please enter a reply message.');
+
+      return;
+    }
+
+    try {
+      setReplySending(true);
+
+      setReplyError('');
+
+      setReplySuccess('');
+
+      /* =====================================================
+         REPLY SUBJECT
+      ===================================================== */
+
+      const originalSubject = selectedEmail.subject || 'No Subject';
+
+      const replySubject = originalSubject.toLowerCase().startsWith('re:')
+        ? originalSubject
+        : `Re: ${originalSubject}`;
+
+      /* =====================================================
+         FORM DATA
+      ===================================================== */
+
+      const formData = new FormData();
+
+      formData.append('email', selectedEmail.email);
+
+      formData.append('name', selectedEmail.name || '');
+
+      formData.append('subject', replySubject);
+
+      formData.append('message', replyMessage.trim());
+
+      /*
+        Use the same Greens Shuttle sender.
+        This is important because the backend
+        selects the correct SMTP mailbox.
+      */
+
+      formData.append('from', selectedEmail.from || 'info@greensshuttle.co.za');
+
+      /* =====================================================
+         SEND
+      ===================================================== */
+
+      const response = await fetch(`${API_URL}/api/emails/send`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Unable to send reply.');
+      }
+
+      /* =====================================================
+         SUCCESS
+      ===================================================== */
+
+      setReplySuccess('Reply sent successfully.');
+
+      setReplyMessage('');
+
+      setReplyMode(false);
+
+      /*
+        Reload Sent Mail so the reply immediately
+        appears in the list.
+      */
+
+      await loadSentEmails();
+
+      /*
+        Keep the modal open.
+      */
+
+      setSelectedEmail(data.email || selectedEmail);
+    } catch (err) {
+      console.error('Reply error:', err);
+
+      setReplyError(err.message || 'Unable to send reply.');
+    } finally {
+      setReplySending(false);
+    }
   };
 
   /* =========================================================
@@ -150,8 +325,6 @@ const EmailSent = () => {
       ====================================================== */}
 
       <section className="email-sent-stats">
-        {/* TOTAL */}
-
         <div className="email-sent-stat-card">
           <div className="email-sent-stat-icon">↗</div>
 
@@ -162,8 +335,6 @@ const EmailSent = () => {
           </div>
         </div>
 
-        {/* ATTACHMENTS */}
-
         <div className="email-sent-stat-card">
           <div className="email-sent-stat-icon">📎</div>
 
@@ -173,8 +344,6 @@ const EmailSent = () => {
             <strong>{attachmentCount}</strong>
           </div>
         </div>
-
-        {/* RESULTS */}
 
         <div className="email-sent-stat-card">
           <div className="email-sent-stat-icon">≡</div>
@@ -192,8 +361,6 @@ const EmailSent = () => {
       ====================================================== */}
 
       <section className="email-sent-panel">
-        {/* PANEL HEADER */}
-
         <div className="email-sent-panel-header">
           <div>
             <span className="email-sent-eyebrow">EMAILS</span>
@@ -203,15 +370,13 @@ const EmailSent = () => {
             <p>View emails sent from the Greens Shuttle dashboard.</p>
           </div>
 
-          {/* REFRESH */}
-
           <button type="button" className="email-sent-refresh" onClick={loadSentEmails}>
             ↻ Refresh
           </button>
         </div>
 
         {/* =================================================
-            TOOLBAR
+            SEARCH
         ================================================== */}
 
         <div className="email-sent-toolbar">
@@ -250,10 +415,6 @@ const EmailSent = () => {
             </p>
           </div>
         ) : (
-          /* =================================================
-             EMAIL LIST
-          ================================================== */
-
           <div className="email-sent-list">
             {filteredEmails.map((email) => (
               <button
@@ -262,13 +423,9 @@ const EmailSent = () => {
                 className="email-sent-item"
                 onClick={() => openEmail(email)}
               >
-                {/* AVATAR */}
-
                 <div className="email-sent-avatar">
                   {(email.name || email.email || 'G').charAt(0).toUpperCase()}
                 </div>
-
-                {/* CONTENT */}
 
                 <div className="email-sent-item-content">
                   <div className="email-sent-item-top">
@@ -294,8 +451,6 @@ const EmailSent = () => {
                   </div>
                 </div>
 
-                {/* ARROW */}
-
                 <div className="email-sent-arrow">›</div>
               </button>
             ))}
@@ -310,7 +465,9 @@ const EmailSent = () => {
       {selectedEmail && (
         <div className="email-sent-modal-overlay" onClick={closeEmail}>
           <div className="email-sent-modal" onClick={(event) => event.stopPropagation()}>
-            {/* MODAL HEADER */}
+            {/* =================================================
+                HEADER
+            ================================================== */}
 
             <div className="email-sent-modal-header">
               <div>
@@ -324,7 +481,9 @@ const EmailSent = () => {
               </button>
             </div>
 
-            {/* RECIPIENT */}
+            {/* =================================================
+                RECIPIENT
+            ================================================== */}
 
             <div className="email-sent-recipient">
               <div className="email-sent-avatar large">
@@ -340,7 +499,15 @@ const EmailSent = () => {
               </div>
             </div>
 
-            {/* MESSAGE */}
+            {/* =================================================
+                SUCCESS
+            ================================================== */}
+
+            {replySuccess && <div className="email-sent-reply-success">✓ {replySuccess}</div>}
+
+            {/* =================================================
+                ORIGINAL MESSAGE
+            ================================================== */}
 
             <div className="email-sent-message">
               <span className="email-sent-eyebrow">MESSAGE</span>
@@ -350,7 +517,9 @@ const EmailSent = () => {
               </div>
             </div>
 
-            {/* ATTACHMENTS */}
+            {/* =================================================
+                ATTACHMENTS
+            ================================================== */}
 
             <div className="email-sent-attachments">
               <span className="email-sent-eyebrow">ATTACHMENTS</span>
@@ -376,17 +545,76 @@ const EmailSent = () => {
               )}
             </div>
 
-            {/* ACTIONS */}
+            {/* =================================================
+                REPLY COMPOSER
+            ================================================== */}
 
-            <div className="email-sent-modal-actions">
-              <a href={`mailto:${selectedEmail.email}`} className="email-sent-reply">
-                Email Customer
-              </a>
+            {replyMode ? (
+              <form className="email-sent-reply-form" onSubmit={sendReply}>
+                <div className="email-sent-reply-header">
+                  <div>
+                    <span className="email-sent-eyebrow">REPLY</span>
 
-              <button type="button" className="email-sent-secondary" onClick={closeEmail}>
-                Close
-              </button>
-            </div>
+                    <strong>To: {selectedEmail.email}</strong>
+                  </div>
+
+                  <span>
+                    {selectedEmail.subject?.toLowerCase().startsWith('re:')
+                      ? selectedEmail.subject
+                      : `Re: ${selectedEmail.subject || 'No Subject'}`}
+                  </span>
+                </div>
+
+                <textarea
+                  className="email-sent-reply-textarea"
+                  placeholder="Write your reply..."
+                  value={replyMessage}
+                  onChange={(event) => setReplyMessage(event.target.value)}
+                  rows={7}
+                  disabled={replySending}
+                  autoFocus
+                />
+
+                {replyError && <div className="email-sent-reply-error">! {replyError}</div>}
+
+                <div className="email-sent-reply-actions">
+                  <button
+                    type="button"
+                    className="email-sent-secondary"
+                    onClick={cancelReply}
+                    disabled={replySending}
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="submit"
+                    className="email-sent-reply"
+                    disabled={replySending || !replyMessage.trim()}
+                  >
+                    {replySending ? 'Sending...' : 'Send Reply'}
+                  </button>
+                </div>
+              </form>
+            ) : (
+              /* =================================================
+                 ACTIONS
+              ================================================== */
+
+              <div className="email-sent-modal-actions">
+                <button type="button" className="email-sent-reply" onClick={startReply}>
+                  ↩ Reply
+                </button>
+
+                <a href={`mailto:${selectedEmail.email}`} className="email-sent-secondary">
+                  Open Mail App
+                </a>
+
+                <button type="button" className="email-sent-secondary" onClick={closeEmail}>
+                  Close
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

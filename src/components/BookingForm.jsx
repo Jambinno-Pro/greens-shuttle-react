@@ -1,5 +1,7 @@
 import { useState } from 'react';
 
+const API_URL = 'http://localhost:5000';
+
 export default function BookingForm() {
   const [formData, setFormData] = useState({
     pickup: '',
@@ -8,6 +10,15 @@ export default function BookingForm() {
     passengers: '',
     service: '',
   });
+
+  const [proofFile, setProofFile] = useState(null);
+  const [sending, setSending] = useState(false);
+  const [statusMessage, setStatusMessage] = useState('');
+  const [statusType, setStatusType] = useState('');
+
+  /* =====================================================
+     FORM CHANGE
+  ====================================================== */
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -18,12 +29,110 @@ export default function BookingForm() {
     }));
   };
 
-  const handleSubmit = (e) => {
+  /* =====================================================
+     FILE CHANGE
+  ====================================================== */
+
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+
+    if (!file) {
+      setProofFile(null);
+      return;
+    }
+
+    setProofFile(file);
+  };
+
+  /* =====================================================
+     SUBMIT BOOKING
+  ====================================================== */
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    console.log('Booking request:', formData);
+    setStatusMessage('');
+    setStatusType('');
 
-    alert('Thank you! Your booking request has been received. We will contact you shortly.');
+    try {
+      setSending(true);
+
+      /* =================================================
+         FORM DATA
+      ================================================= */
+
+      const bookingData = new FormData();
+
+      bookingData.append('pickup', formData.pickup);
+      bookingData.append('destination', formData.destination);
+      bookingData.append('travelDate', formData.date);
+      bookingData.append('passengers', formData.passengers);
+      bookingData.append('service', formData.service);
+
+      /* =================================================
+         PROOF OF BOOKING / DOCUMENT
+      ================================================= */
+
+      if (proofFile) {
+        bookingData.append('proofOfBooking', proofFile);
+      }
+
+      /* =================================================
+         SEND TO BACKEND
+      ================================================= */
+
+      const response = await fetch(`${API_URL}/api/bookings`, {
+        method: 'POST',
+        body: bookingData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Unable to submit booking request.');
+      }
+
+      /* =================================================
+         SUCCESS
+      ================================================= */
+
+      console.log('Booking created:', data);
+
+      setStatusMessage(
+        'Thank you! Your booking request has been received. We will contact you shortly.'
+      );
+
+      setStatusType('success');
+
+      /* =================================================
+         RESET FORM
+      ================================================= */
+
+      setFormData({
+        pickup: '',
+        destination: '',
+        date: '',
+        passengers: '',
+        service: '',
+      });
+
+      setProofFile(null);
+
+      /* Reset file input */
+      const fileInput = document.getElementById('proofOfBooking');
+
+      if (fileInput) {
+        fileInput.value = '';
+      }
+    } catch (error) {
+      console.error('Booking submission error:', error);
+
+      setStatusMessage(error.message || 'Unable to submit booking. Please try again.');
+
+      setStatusType('error');
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -32,6 +141,7 @@ export default function BookingForm() {
         {/* =====================================================
             HEADING
         ====================================================== */}
+
         <div className="booking-glass-heading">
           <span className="section-eyebrow">PLAN YOUR JOURNEY</span>
 
@@ -47,10 +157,20 @@ export default function BookingForm() {
         </div>
 
         {/* =====================================================
+            STATUS MESSAGE
+        ====================================================== */}
+
+        {statusMessage && (
+          <div className={`booking-form-status ${statusType}`}>{statusMessage}</div>
+        )}
+
+        {/* =====================================================
             BOOKING FORM
         ====================================================== */}
+
         <form className="glass-booking-form" onSubmit={handleSubmit}>
           {/* PICKUP */}
+
           <div className="glass-field">
             <label htmlFor="pickup">Pickup Location</label>
 
@@ -66,6 +186,7 @@ export default function BookingForm() {
           </div>
 
           {/* DESTINATION */}
+
           <div className="glass-field">
             <label htmlFor="destination">Destination</label>
 
@@ -81,6 +202,7 @@ export default function BookingForm() {
           </div>
 
           {/* DATE */}
+
           <div className="glass-field">
             <label htmlFor="date">Travel Date</label>
 
@@ -95,6 +217,7 @@ export default function BookingForm() {
           </div>
 
           {/* PASSENGERS */}
+
           <div className="glass-field">
             <label htmlFor="passengers">Passengers</label>
 
@@ -111,6 +234,7 @@ export default function BookingForm() {
           </div>
 
           {/* SERVICE */}
+
           <div className="glass-field">
             <label htmlFor="service">Service</label>
 
@@ -141,11 +265,42 @@ export default function BookingForm() {
             </select>
           </div>
 
-          {/* SUBMIT */}
-          <button type="submit" className="glass-booking-button">
-            <span>Request a Booking</span>
+          {/* =====================================================
+              PROOF OF BOOKING / DOCUMENT
+          ====================================================== */}
 
-            <span>→</span>
+          <div className="glass-field">
+            <label htmlFor="proofOfBooking">Proof of Payment / Document</label>
+
+            <input
+              id="proofOfBooking"
+              name="proofOfBooking"
+              type="file"
+              accept=".pdf,.jpg,.jpeg,.png,.webp"
+              onChange={handleFileChange}
+            />
+
+            {proofFile && <small>Selected: {proofFile.name}</small>}
+
+            <small>PDF, JPG, JPEG, PNG or WEBP — maximum 10 MB.</small>
+          </div>
+
+          {/* =====================================================
+              SUBMIT
+          ====================================================== */}
+
+          <button type="submit" className="glass-booking-button" disabled={sending}>
+            {sending ? (
+              <>
+                <span>Sending...</span>
+                <span>⏳</span>
+              </>
+            ) : (
+              <>
+                <span>Request a Booking</span>
+                <span>→</span>
+              </>
+            )}
           </button>
         </form>
       </div>

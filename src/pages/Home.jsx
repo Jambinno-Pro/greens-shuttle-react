@@ -4,6 +4,7 @@ import ServiceCard from '../components/ServiceCard';
 import DestinationCard from '../components/DestinationCard';
 import BookingForm from '../components/BookingForm';
 import DestinationMarquee from '../components/DestinationMarquee';
+import GoogleReviews from '../components/GoogleReviews';
 
 import { services, destinations } from '../data/siteData';
 
@@ -162,6 +163,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <GoogleReviews />
     </main>
   );
 }

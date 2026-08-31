@@ -6,8 +6,18 @@ const API_URL = 'http://localhost:5000';
 const Contacts = () => {
   const [contacts, setContacts] = useState([]);
   const [selectedContact, setSelectedContact] = useState(null);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  const [replyMessage, setReplyMessage] = useState('');
+  const [replyStatus, setReplyStatus] = useState('');
+  const [sendingReply, setSendingReply] = useState(false);
+  const [deletingContact, setDeletingContact] = useState(false);
+
+  /* =====================================================
+     LOAD CONTACTS
+  ====================================================== */
 
   useEffect(() => {
     loadContacts();
@@ -29,13 +39,22 @@ const Contacts = () => {
       setContacts(data.contacts || []);
     } catch (err) {
       console.error('Contacts error:', err);
+
       setError('Unable to load contact enquiries.');
     } finally {
       setLoading(false);
     }
   };
 
+  /* =====================================================
+     STATISTICS
+  ====================================================== */
+
   const unreadContacts = contacts.filter((contact) => contact.status === 'unread').length;
+
+  /* =====================================================
+     DATE FORMATTING
+  ====================================================== */
 
   const formatDate = (date) => {
     if (!date) return '-';
@@ -59,35 +78,220 @@ const Contacts = () => {
     });
   };
 
+  /* =====================================================
+     OPEN CONTACT
+  ====================================================== */
+
   const openContact = async (contact) => {
     setSelectedContact(contact);
+    setReplyMessage('');
+    setReplyStatus('');
 
-    // Mark unread message as read locally
-    if (contact.status === 'unread') {
-      setContacts((currentContacts) =>
-        currentContacts.map((item) => (item.id === contact.id ? { ...item, status: 'read' } : item))
-      );
+    /*
+      If already read, nothing needs to happen.
+    */
 
-      setSelectedContact({
-        ...contact,
-        status: 'read',
+    if (contact.status !== 'unread') {
+      return;
+    }
+
+    /*
+      Update locally immediately so the dashboard
+      responds instantly.
+    */
+
+    setContacts((currentContacts) =>
+      currentContacts.map((item) =>
+        item.id === contact.id
+          ? {
+              ...item,
+              status: 'read',
+            }
+          : item
+      )
+    );
+
+    setSelectedContact({
+      ...contact,
+      status: 'read',
+    });
+
+    /*
+      Save READ status to backend.
+    */
+
+    try {
+      const response = await fetch(`${API_URL}/api/contact/${contact.id}/read`, {
+        method: 'PATCH',
       });
 
-      /*
-        We will connect this to the backend later.
-
-        Example:
-
-        await fetch(`${API_URL}/api/contact/${contact.id}/read`, {
-          method: 'PATCH',
-        });
-      */
+      if (!response.ok) {
+        console.error('Unable to save contact read status.');
+      }
+    } catch (err) {
+      console.error('Mark contact as read error:', err);
     }
   };
 
+  /* =====================================================
+     CLOSE CONTACT
+  ====================================================== */
+
   const closeContact = () => {
+    if (sendingReply || deletingContact) return;
+
     setSelectedContact(null);
+    setReplyMessage('');
+    setReplyStatus('');
   };
+
+  /* =====================================================
+     SEND REPLY
+     
+     USES THE EXISTING EMAIL SYSTEM.
+     
+     POST /api/emails/send
+  ====================================================== */
+
+  const handleReply = async (event) => {
+    event.preventDefault();
+
+    if (!selectedContact) {
+      return;
+    }
+
+    const customerEmail = selectedContact.email?.trim();
+
+    if (!customerEmail) {
+      setReplyStatus('This contact does not have a customer email address.');
+
+      return;
+    }
+
+    if (!replyMessage.trim()) {
+      setReplyStatus('Please enter a message before sending.');
+
+      return;
+    }
+
+    try {
+      setSendingReply(true);
+      setReplyStatus('');
+
+      const response = await fetch(`${API_URL}/api/emails/send`, {
+        method: 'POST',
+
+        headers: {
+          'Content-Type': 'application/json',
+        },
+
+        body: JSON.stringify({
+          from: 'info@greensshuttle.co.za',
+
+          email: customerEmail,
+
+          name: selectedContact.name || '',
+
+          subject: `Re: ${selectedContact.subject || 'Your enquiry'}`,
+
+          message: replyMessage.trim(),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Unable to send reply.');
+      }
+
+      setReplyStatus(data.message || 'Reply sent successfully to the customer.');
+
+      setReplyMessage('');
+
+      console.log('✓ Contact reply sent:', data);
+    } catch (err) {
+      console.error('Reply error:', err);
+
+      setReplyStatus(err.message || 'Unable to send reply. Please try again.');
+    } finally {
+      setSendingReply(false);
+    }
+  };
+
+  /* =====================================================
+     DELETE CONTACT
+  ====================================================== */
+
+  const handleDeleteContact = async () => {
+    if (!selectedContact) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Are you sure you want to delete this contact enquiry from ${
+        selectedContact.name || 'this customer'
+      }?`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setDeletingContact(true);
+      setError('');
+
+      const response = await fetch(`${API_URL}/api/contact/${selectedContact.id}`, {
+        method: 'DELETE',
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Unable to delete contact enquiry.');
+      }
+
+      /*
+        Remove it from the dashboard immediately.
+      */
+
+      setContacts((currentContacts) =>
+        currentContacts.filter((contact) => contact.id !== selectedContact.id)
+      );
+
+      /*
+        Close popup.
+      */
+
+      setSelectedContact(null);
+      setReplyMessage('');
+      setReplyStatus('');
+
+      console.log('✓ Contact deleted:', selectedContact.id);
+    } catch (err) {
+      console.error('Delete contact error:', err);
+
+      setError(err.message || 'Unable to delete contact enquiry.');
+    } finally {
+      setDeletingContact(false);
+    }
+  };
+
+  /* =====================================================
+     LOADING
+  ====================================================== */
+
+  if (loading) {
+    return (
+      <div className="dashboard-content">
+        <div className="dashboard-empty">Loading contact enquiries...</div>
+      </div>
+    );
+  }
+
+  /* =====================================================
+     PAGE
+  ====================================================== */
 
   return (
     <div className="dashboard-content">
@@ -102,7 +306,7 @@ const Contacts = () => {
           <div>
             <span>Total Enquiries</span>
 
-            <strong>{loading ? '—' : contacts.length}</strong>
+            <strong>{contacts.length}</strong>
           </div>
         </div>
 
@@ -112,7 +316,7 @@ const Contacts = () => {
           <div>
             <span>Unread</span>
 
-            <strong>{loading ? '—' : unreadContacts}</strong>
+            <strong>{unreadContacts}</strong>
           </div>
         </div>
       </div>
@@ -138,11 +342,11 @@ const Contacts = () => {
 
         {error && <div className="dashboard-error">{error}</div>}
 
-        {/* LOADING */}
+        {/* =====================================================
+            NO CONTACTS
+        ====================================================== */}
 
-        {loading ? (
-          <div className="dashboard-empty">Loading contact enquiries...</div>
-        ) : contacts.length === 0 ? (
+        {contacts.length === 0 ? (
           <div className="dashboard-empty">
             <div style={{ fontSize: '25px' }}>✉</div>
 
@@ -151,6 +355,10 @@ const Contacts = () => {
             <p>Customer messages submitted through the website contact form will appear here.</p>
           </div>
         ) : (
+          /* =====================================================
+             CONTACT TABLE
+          ====================================================== */
+
           <div className="dashboard-table-wrapper">
             <table className="dashboard-table">
               <thead>
@@ -205,7 +413,9 @@ const Contacts = () => {
       {selectedContact && (
         <div className="dashboard-modal-overlay" onClick={closeContact}>
           <div className="dashboard-message-modal" onClick={(event) => event.stopPropagation()}>
-            {/* HEADER */}
+            {/* =================================================
+                HEADER
+            ================================================= */}
 
             <div className="dashboard-modal-header">
               <div>
@@ -214,12 +424,19 @@ const Contacts = () => {
                 <h2>{selectedContact.subject || 'Contact Enquiry'}</h2>
               </div>
 
-              <button type="button" className="dashboard-modal-close" onClick={closeContact}>
+              <button
+                type="button"
+                className="dashboard-modal-close"
+                onClick={closeContact}
+                disabled={sendingReply || deletingContact}
+              >
                 ×
               </button>
             </div>
 
-            {/* CUSTOMER DETAILS */}
+            {/* =================================================
+                CUSTOMER DETAILS
+            ================================================= */}
 
             <div className="dashboard-message-details">
               <div>
@@ -247,7 +464,9 @@ const Contacts = () => {
               </div>
             </div>
 
-            {/* MESSAGE */}
+            {/* =================================================
+                MESSAGE
+            ================================================= */}
 
             <div className="dashboard-message-body">
               <span className="dashboard-section-label">MESSAGE</span>
@@ -257,9 +476,11 @@ const Contacts = () => {
               </div>
             </div>
 
-            {/* ATTACHMENTS */}
+            {/* =================================================
+                ATTACHMENTS
+            ================================================= */}
 
-            {selectedContact.attachments && selectedContact.attachments.length > 0 && (
+            {selectedContact.attachments && selectedContact.attachments.length > 0 ? (
               <div className="dashboard-message-attachments">
                 <span className="dashboard-section-label">ATTACHMENTS</span>
 
@@ -279,11 +500,7 @@ const Contacts = () => {
                   ))}
                 </div>
               </div>
-            )}
-
-            {/* NO ATTACHMENTS */}
-
-            {(!selectedContact.attachments || selectedContact.attachments.length === 0) && (
+            ) : (
               <div className="dashboard-message-attachments">
                 <span className="dashboard-section-label">ATTACHMENTS</span>
 
@@ -291,19 +508,60 @@ const Contacts = () => {
               </div>
             )}
 
-            {/* ACTIONS */}
+            {/* =================================================
+                REPLY
+            ================================================= */}
 
             <div className="dashboard-message-actions">
-              <a
-                href={`mailto:${selectedContact.email}?subject=${encodeURIComponent(
-                  `Re: ${selectedContact.subject || 'Your enquiry'}`
-                )}`}
-                className="dashboard-reply-button"
+              <form
+                onSubmit={handleReply}
+                style={{
+                  width: '100%',
+                }}
               >
-                Reply to Customer
-              </a>
+                <textarea
+                  className="booking-reply-textarea"
+                  placeholder="Write your reply to the customer..."
+                  rows="5"
+                  value={replyMessage}
+                  onChange={(event) => setReplyMessage(event.target.value)}
+                  disabled={sendingReply}
+                />
 
-              <button type="button" className="dashboard-secondary-button" onClick={closeContact}>
+                {replyStatus && (
+                  <div
+                    className={`booking-reply-status ${
+                      replyStatus.toLowerCase().includes('success') ? 'success' : 'error'
+                    }`}
+                  >
+                    {replyStatus}
+                  </div>
+                )}
+
+                <button type="submit" className="dashboard-reply-button" disabled={sendingReply}>
+                  {sendingReply ? 'Sending...' : 'Reply to Customer'}
+                </button>
+              </form>
+
+              {/* DELETE */}
+
+              <button
+                type="button"
+                className="dashboard-secondary-button"
+                onClick={handleDeleteContact}
+                disabled={sendingReply || deletingContact}
+              >
+                {deletingContact ? 'Deleting...' : 'Delete Contact'}
+              </button>
+
+              {/* CLOSE */}
+
+              <button
+                type="button"
+                className="dashboard-secondary-button"
+                onClick={closeContact}
+                disabled={sendingReply || deletingContact}
+              >
                 Close
               </button>
             </div>

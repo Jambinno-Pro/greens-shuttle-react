@@ -14,13 +14,16 @@ const Bookings = () => {
   const [replyStatus, setReplyStatus] = useState('');
   const [sendingReply, setSendingReply] = useState(false);
 
-  useEffect(() => {
-    loadBookings();
-  }, []);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [deletingBooking, setDeletingBooking] = useState(false);
 
   /* =====================================================
      LOAD BOOKINGS
   ===================================================== */
+
+  useEffect(() => {
+    loadBookings();
+  }, []);
 
   const loadBookings = async () => {
     try {
@@ -38,6 +41,7 @@ const Bookings = () => {
       setBookings(data.bookings || []);
     } catch (err) {
       console.error('Bookings error:', err);
+
       setError('Unable to load bookings.');
     } finally {
       setLoading(false);
@@ -85,27 +89,150 @@ const Bookings = () => {
   ===================================================== */
 
   const closeBooking = () => {
+    if (sendingReply || updatingStatus || deletingBooking) {
+      return;
+    }
+
     setSelectedBooking(null);
     setReplyMessage('');
     setReplyStatus('');
   };
 
   /* =====================================================
-     SEND REPLY
+     UPDATE BOOKING STATUS
+  ===================================================== */
+
+  const handleStatusChange = async (event) => {
+    if (!selectedBooking) return;
+
+    const newStatus = event.target.value;
+
+    try {
+      setUpdatingStatus(true);
+      setError('');
+
+      const response = await fetch(`${API_URL}/api/bookings/${selectedBooking.id}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: newStatus,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Unable to update booking status.');
+      }
+
+      /* Update selected booking */
+
+      setSelectedBooking((previous) => ({
+        ...previous,
+        status: newStatus,
+      }));
+
+      /* Update booking in table */
+
+      setBookings((previousBookings) =>
+        previousBookings.map((booking) =>
+          booking.id === selectedBooking.id
+            ? {
+                ...booking,
+                status: newStatus,
+              }
+            : booking
+        )
+      );
+    } catch (err) {
+      console.error('Status update error:', err);
+
+      setError(err.message || 'Unable to update booking status.');
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
+  /* =====================================================
+     DELETE BOOKING
+  ===================================================== */
+
+  const handleDeleteBooking = async () => {
+    if (!selectedBooking) return;
+
+    const confirmed = window.confirm(
+      `Are you sure you want to delete booking ${selectedBooking.id}?\n\nThis action cannot be undone.`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setDeletingBooking(true);
+      setError('');
+
+      const response = await fetch(`${API_URL}/api/bookings/${selectedBooking.id}`, {
+        method: 'DELETE',
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Unable to delete booking.');
+      }
+
+      /* Remove booking from table */
+
+      setBookings((previousBookings) =>
+        previousBookings.filter((booking) => booking.id !== selectedBooking.id)
+      );
+
+      /* Close modal */
+
+      setSelectedBooking(null);
+      setReplyMessage('');
+      setReplyStatus('');
+    } catch (err) {
+      console.error('Delete booking error:', err);
+
+      setError(err.message || 'Unable to delete booking.');
+    } finally {
+      setDeletingBooking(false);
+    }
+  };
+
+  /* =====================================================
+     SEND REPLY TO CUSTOMER
      
      IMPORTANT:
-     This currently prepares the reply interface.
-     We will connect it to the backend email endpoint
-     in the next step.
+     Uses the EXISTING email system.
+
+     POST /api/emails/send
+
+     Nothing in the existing email system is changed.
   ===================================================== */
 
   const handleReply = async (event) => {
     event.preventDefault();
 
-    if (!selectedBooking) return;
+    if (!selectedBooking) {
+      return;
+    }
+
+    const customerEmail = selectedBooking.email?.trim();
+
+    if (!customerEmail) {
+      setReplyStatus('This booking does not have a customer email address.');
+
+      return;
+    }
 
     if (!replyMessage.trim()) {
       setReplyStatus('Please enter a message before sending.');
+
       return;
     }
 
@@ -113,21 +240,23 @@ const Bookings = () => {
       setSendingReply(true);
       setReplyStatus('');
 
-      /*
-        Backend endpoint we will add next:
-
-        POST /api/bookings/:id/reply
-
-        For now this checks that the form is working.
-      */
-
-      const response = await fetch(`${API_URL}/api/bookings/${selectedBooking.id}/reply`, {
+      const response = await fetch(`${API_URL}/api/emails/send`, {
         method: 'POST',
+
         headers: {
           'Content-Type': 'application/json',
         },
+
         body: JSON.stringify({
-          message: replyMessage,
+          from: 'info@greensshuttle.co.za',
+
+          email: customerEmail,
+
+          name: selectedBooking.name || '',
+
+          subject: `Re: Booking ${selectedBooking.id}`,
+
+          message: replyMessage.trim(),
         }),
       });
 
@@ -137,8 +266,11 @@ const Bookings = () => {
         throw new Error(data.message || 'Unable to send reply.');
       }
 
-      setReplyStatus('Reply sent successfully.');
+      setReplyStatus(data.message || 'Reply sent successfully to the customer.');
+
       setReplyMessage('');
+
+      console.log('✓ Booking reply sent:', data);
     } catch (err) {
       console.error('Reply error:', err);
 
@@ -217,7 +349,6 @@ const Bookings = () => {
                   <th>JOURNEY</th>
                   <th>TRAVEL DATE</th>
                   <th>PASSENGERS</th>
-                  <th>STATUS</th>
                   <th></th>
                 </tr>
               </thead>
@@ -271,14 +402,6 @@ const Bookings = () => {
 
                     <td>{booking.passengers || '-'}</td>
 
-                    {/* STATUS */}
-
-                    <td>
-                      <span className={`dashboard-status ${booking.status || 'pending'}`}>
-                        {booking.status || 'pending'}
-                      </span>
-                    </td>
-
                     {/* VIEW */}
 
                     <td>
@@ -297,16 +420,17 @@ const Bookings = () => {
           </div>
         )}
       </section>
+
       {/* =====================================================
-    BOOKING DETAILS MODAL
-===================================================== */}
+          BOOKING DETAILS MODAL
+      ===================================================== */}
 
       {selectedBooking && (
-        <div className="booking-details-overlay" onClick={() => setSelectedBooking(null)}>
+        <div className="booking-details-overlay" onClick={closeBooking}>
           <div className="booking-details-modal" onClick={(event) => event.stopPropagation()}>
             {/* =================================================
-          MODAL HEADER
-      ================================================== */}
+                MODAL HEADER
+            ================================================= */}
 
             <div className="booking-details-header">
               <div>
@@ -320,15 +444,16 @@ const Bookings = () => {
               <button
                 type="button"
                 className="booking-details-close"
-                onClick={() => setSelectedBooking(null)}
+                onClick={closeBooking}
+                disabled={sendingReply || updatingStatus || deletingBooking}
               >
                 ×
               </button>
             </div>
 
             {/* =================================================
-          01 CUSTOMER
-      ================================================== */}
+                01 CUSTOMER
+            ================================================= */}
 
             <section className="booking-details-section">
               <div className="booking-section-heading">
@@ -343,6 +468,7 @@ const Bookings = () => {
               <div className="booking-info-card">
                 <div className="booking-info-item">
                   <span>NAME</span>
+
                   <strong>{selectedBooking.name || '-'}</strong>
                 </div>
 
@@ -361,8 +487,8 @@ const Bookings = () => {
             </section>
 
             {/* =================================================
-          02 JOURNEY
-      ================================================== */}
+                02 JOURNEY
+            ================================================= */}
 
             <section className="booking-details-section">
               <div className="booking-section-heading">
@@ -420,8 +546,8 @@ const Bookings = () => {
             </section>
 
             {/* =================================================
-          03 CUSTOMER MESSAGE
-      ================================================== */}
+                03 CUSTOMER MESSAGE
+            ================================================= */}
 
             <section className="booking-details-section">
               <div className="booking-section-heading">
@@ -443,8 +569,8 @@ const Bookings = () => {
             </section>
 
             {/* =================================================
-          04 DOCUMENTS
-      ================================================== */}
+                04 DOCUMENTS
+            ================================================= */}
 
             <section className="booking-details-section">
               <div className="booking-section-heading">
@@ -462,13 +588,17 @@ const Bookings = () => {
                     <div className="booking-document-icon">📄</div>
 
                     <div className="booking-document-info">
-                      <strong>{selectedBooking.proof.name || 'Proof of Payment'}</strong>
+                      <strong>
+                        {selectedBooking.proof.name ||
+                          selectedBooking.proof.originalName ||
+                          'Proof of Payment'}
+                      </strong>
 
                       <span>Customer document</span>
                     </div>
 
                     <a
-                      href={`http://localhost:5000${selectedBooking.proof.path}`}
+                      href={`http://localhost:5000${selectedBooking.proof.path || ''}`}
                       target="_blank"
                       rel="noreferrer"
                       className="booking-document-button"
@@ -515,8 +645,8 @@ const Bookings = () => {
             </section>
 
             {/* =================================================
-          BOOKING STATUS
-      ================================================== */}
+                BOOKING STATUS
+            ================================================= */}
 
             <section className="booking-status-section">
               <div>
@@ -525,14 +655,23 @@ const Bookings = () => {
                 <h3>Current Booking Status</h3>
               </div>
 
-              <span className={`booking-large-status ${selectedBooking.status || 'pending'}`}>
-                {selectedBooking.status || 'pending'}
-              </span>
+              <select
+                value={selectedBooking.status || 'pending'}
+                onChange={handleStatusChange}
+                disabled={updatingStatus}
+                className={`booking-large-status ${selectedBooking.status || 'pending'}`}
+              >
+                <option value="pending">Pending</option>
+
+                <option value="in-progress">In Progress</option>
+
+                <option value="completed">Completed</option>
+              </select>
             </section>
 
             {/* =================================================
-          CUSTOMER COMMUNICATION
-      ================================================== */}
+                CUSTOMER COMMUNICATION
+            ================================================= */}
 
             <section className="booking-reply-section">
               <div className="booking-section-heading">
@@ -540,6 +679,7 @@ const Bookings = () => {
 
                 <div>
                   <small>CUSTOMER COMMUNICATION</small>
+
                   <h3>Reply to Customer</h3>
                 </div>
               </div>
@@ -551,29 +691,42 @@ const Bookings = () => {
                   <strong>{selectedBooking.email || '-'}</strong>
                 </div>
 
-                <textarea
-                  className="booking-reply-textarea"
-                  placeholder="Write your reply to the customer..."
-                  rows="6"
-                />
+                <form onSubmit={handleReply}>
+                  <textarea
+                    className="booking-reply-textarea"
+                    placeholder="Write your reply to the customer..."
+                    rows="6"
+                    value={replyMessage}
+                    onChange={(event) => setReplyMessage(event.target.value)}
+                    disabled={sendingReply}
+                  />
 
-                <div className="booking-reply-footer">
-                  <span>Your reply will be sent to the customer's email address.</span>
+                  {replyStatus && (
+                    <div
+                      className={`booking-reply-status ${
+                        replyStatus.toLowerCase().includes('success') ? 'success' : 'error'
+                      }`}
+                    >
+                      {replyStatus}
+                    </div>
+                  )}
 
-                  <button
-                    type="button"
-                    className="booking-send-reply"
-                    onClick={() => alert('Email sending will be connected next.')}
-                  >
-                    Send Reply →
-                  </button>
-                </div>
+                  <div className="booking-reply-footer">
+                    <span>
+                      Reply will be sent from <strong>info@greensshuttle.co.za</strong>
+                    </span>
+
+                    <button type="submit" className="booking-send-reply" disabled={sendingReply}>
+                      {sendingReply ? '⏳ Sending...' : 'Send Reply →'}
+                    </button>
+                  </div>
+                </form>
               </div>
             </section>
 
             {/* =================================================
-          QUICK CONTACT
-      ================================================== */}
+                QUICK CONTACT
+            ================================================= */}
 
             <section className="booking-quick-contact">
               <span>QUICK CONTACT</span>
@@ -599,8 +752,27 @@ const Bookings = () => {
             </section>
 
             {/* =================================================
-          MODAL FOOTER
-      ================================================== */}
+                DELETE BOOKING
+            ================================================= */}
+
+            <section className="booking-quick-contact">
+              <span>BOOKING MANAGEMENT</span>
+
+              <div className="booking-quick-buttons">
+                <button
+                  type="button"
+                  className="booking-quick-button"
+                  onClick={handleDeleteBooking}
+                  disabled={deletingBooking || sendingReply || updatingStatus}
+                >
+                  {deletingBooking ? '⏳ Deleting...' : 'Delete Booking'}
+                </button>
+              </div>
+            </section>
+
+            {/* =================================================
+                MODAL FOOTER
+            ================================================= */}
 
             <div className="booking-details-footer">
               <div>
@@ -614,7 +786,8 @@ const Bookings = () => {
               <button
                 type="button"
                 className="booking-close-button"
-                onClick={() => setSelectedBooking(null)}
+                onClick={closeBooking}
+                disabled={sendingReply || updatingStatus || deletingBooking}
               >
                 Close Booking
               </button>

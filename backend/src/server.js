@@ -1,12 +1,15 @@
+import "dotenv/config";
+
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
 
 import quoteRoutes from "./routes/quoteRoutes.js";
 import bookingRoutes from "./routes/bookingRoutes.js";
 import contactRoutes from "./routes/contactRoutes.js";
+import emailRoutes from "./routes/emailRoutes.js";
+import reviewRoutes from "./routes/reviewRoutes.js";
 
-dotenv.config();
+import { verifyEmailConnections } from "./services/emailService.js";
 
 const app = express();
 
@@ -47,10 +50,27 @@ app.use("/api/bookings", bookingRoutes);
 
 app.use("/api/contact", contactRoutes);
 
+app.use("/api/emails", emailRoutes);
+
+app.use("/api/reviews", reviewRoutes);
+
 /* =========================================================
    START SERVER
 ========================================================= */
 
-app.listen(PORT, () => {
-  console.log(`Greens Shuttle backend running on port ${PORT}`);
+app.listen(PORT, async () => {
+  console.log("");
+  console.log("==========================================");
+  console.log("   GREENS SHUTTLE BACKEND");
+  console.log("==========================================");
+  console.log(`Server running on port ${PORT}`);
+  console.log(`http://localhost:${PORT}`);
+  console.log("==========================================");
+  console.log("");
+
+  /* =======================================================
+     TEST EMAIL CONNECTIONS
+  ======================================================== */
+
+  await verifyEmailConnections();
 });

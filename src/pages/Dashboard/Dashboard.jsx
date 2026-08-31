@@ -178,6 +178,71 @@ const Dashboard = () => {
           </NavLink>
 
           {/* =================================================
+    EMAILS
+================================================= */}
+
+          <div className="dashboard-email-section">
+            <button
+              type="button"
+              className={`dashboard-nav-link dashboard-email-main ${
+                isEmailSection ? 'active' : ''
+              }`}
+              onClick={toggleEmails}
+              aria-expanded={emailsOpen}
+            >
+              <span>✉</span>
+
+              <span className="dashboard-email-title">Emails</span>
+
+              <span className="dashboard-email-chevron">{emailsOpen ? '⌃' : '⌄'}</span>
+            </button>
+
+            {emailsOpen && (
+              <div className="dashboard-email-subnav">
+                <NavLink
+                  to="/dashboard/emails/inbox"
+                  className={({ isActive }) =>
+                    `dashboard-email-sub-link ${isActive ? 'active' : ''}`
+                  }
+                >
+                  <span className="dashboard-email-sub-icon">•</span>
+                  Inbox
+                </NavLink>
+
+                <NavLink
+                  to="/dashboard/emails/sent"
+                  className={({ isActive }) =>
+                    `dashboard-email-sub-link ${isActive ? 'active' : ''}`
+                  }
+                >
+                  <span className="dashboard-email-sub-icon">↗</span>
+                  Sent
+                </NavLink>
+
+                <NavLink
+                  to="/dashboard/emails/attachments"
+                  className={({ isActive }) =>
+                    `dashboard-email-sub-link ${isActive ? 'active' : ''}`
+                  }
+                >
+                  <span className="dashboard-email-sub-icon">📎</span>
+                  Attachments
+                </NavLink>
+
+                <NavLink
+                  to="/dashboard/emails/compose"
+                  className={({ isActive }) =>
+                    `dashboard-email-sub-link ${isActive ? 'active' : ''}`
+                  }
+                >
+                  <span className="dashboard-email-sub-icon">+</span>
+                  Compose
+                </NavLink>
+              </div>
+            )}
+          </div>
+
+          {/* =================================================
               CONTACTS
           ================================================= */}
 
@@ -212,85 +277,6 @@ const Dashboard = () => {
             <span>▤</span>
             Documents
           </NavLink>
-
-          {/* =================================================
-              EMAILS
-          ================================================= */}
-
-          <div className="dashboard-email-section">
-            {/* EMAIL MAIN BUTTON */}
-
-            <button
-              type="button"
-              className={`dashboard-nav-link dashboard-email-main ${
-                isEmailSection ? 'active' : ''
-              }`}
-              onClick={toggleEmails}
-              aria-expanded={emailsOpen}
-            >
-              <span>✉</span>
-
-              <span className="dashboard-email-title">Emails</span>
-
-              <span className="dashboard-email-chevron">{emailsOpen ? '⌃' : '⌄'}</span>
-            </button>
-
-            {/* =================================================
-                EMAIL SUBMENU
-            ================================================= */}
-
-            {emailsOpen && (
-              <div className="dashboard-email-subnav">
-                {/* INBOX */}
-
-                <NavLink
-                  to="/dashboard/emails/inbox"
-                  className={({ isActive }) =>
-                    `dashboard-email-sub-link ${isActive ? 'active' : ''}`
-                  }
-                >
-                  <span className="dashboard-email-sub-icon">•</span>
-                  Inbox
-                </NavLink>
-
-                {/* SENT */}
-
-                <NavLink
-                  to="/dashboard/emails/sent"
-                  className={({ isActive }) =>
-                    `dashboard-email-sub-link ${isActive ? 'active' : ''}`
-                  }
-                >
-                  <span className="dashboard-email-sub-icon">↗</span>
-                  Sent
-                </NavLink>
-
-                {/* ATTACHMENTS */}
-
-                <NavLink
-                  to="/dashboard/emails/attachments"
-                  className={({ isActive }) =>
-                    `dashboard-email-sub-link ${isActive ? 'active' : ''}`
-                  }
-                >
-                  <span className="dashboard-email-sub-icon">📎</span>
-                  Attachments
-                </NavLink>
-
-                {/* COMPOSE */}
-
-                <NavLink
-                  to="/dashboard/emails/compose"
-                  className={({ isActive }) =>
-                    `dashboard-email-sub-link ${isActive ? 'active' : ''}`
-                  }
-                >
-                  <span className="dashboard-email-sub-icon">+</span>
-                  Compose
-                </NavLink>
-              </div>
-            )}
-          </div>
         </nav>
 
         {/* =====================================================

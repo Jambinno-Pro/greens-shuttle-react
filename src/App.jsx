@@ -26,6 +26,8 @@ import Bookings from './pages/Dashboard/Bookings';
 import Contacts from './pages/Dashboard/Contacts';
 import Quotes from './pages/Dashboard/Quotes';
 import Documents from './pages/Dashboard/Documents';
+import EmailAttachments from './pages/Dashboard/emails/EmailAttachments';
+import EmailCompose from './pages/Dashboard/emails/EmailCompose';
 
 // =====================================================
 // DASHBOARD — EMAILS
@@ -154,12 +156,7 @@ export default function App() {
                 has been created.
             ------------------------------------------------ */}
 
-            {/* 
-            <Route
-              path="emails/attachments"
-              element={<EmailAttachments />}
-            />
-            */}
+            <Route path="emails/attachments" element={<EmailAttachments />} />
 
             {/* -----------------------------------------------
                 COMPOSE EMAIL
@@ -168,12 +165,7 @@ export default function App() {
                 has been created.
             ------------------------------------------------ */}
 
-            {/* 
-            <Route
-              path="emails/compose"
-              element={<EmailCompose />}
-            />
-            */}
+            <Route path="emails/compose" element={<EmailCompose />} />
           </Route>
 
           {/* =================================================

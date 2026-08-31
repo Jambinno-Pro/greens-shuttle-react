@@ -12,26 +12,68 @@ const EmailInbox = () => {
   const [filter, setFilter] = useState('all');
 
   /* =========================================================
-LOAD INBOX
-========================================================= */
+     NORMALIZE EMAIL DATA
+  ========================================================= */
+
+  const normalizeEmail = (email, mailbox) => {
+    return {
+      ...email,
+
+      id: `${mailbox}-${email.id}`,
+
+      originalId: email.id,
+
+      mailbox,
+
+      status: email.status === 'read' || email.status === 'unread' ? email.status : 'unread',
+
+      attachments: Array.isArray(email.attachments) ? email.attachments : [],
+    };
+  };
+
+  /* =========================================================
+     LOAD ONE INBOX
+  ========================================================= */
+
+  const loadMailbox = async (mailbox) => {
+    const response = await fetch(`${API_URL}/api/emails/inbox?mailbox=${mailbox}`);
+
+    if (!response.ok) {
+      throw new Error(`Unable to load ${mailbox} inbox.`);
+    }
+
+    const data = await response.json();
+
+    if (!Array.isArray(data.emails)) {
+      return [];
+    }
+
+    return data.emails.map((email) => normalizeEmail(email, mailbox));
+  };
+
+  /* =========================================================
+     LOAD BOTH INBOXES
+  ========================================================= */
 
   const loadInbox = async () => {
     try {
       setLoading(true);
       setError('');
 
-      const response = await fetch(`${API_URL}/api/emails/inbox`);
+      const [infoEmails, bookingsEmails] = await Promise.all([
+        loadMailbox('info'),
+        loadMailbox('bookings'),
+      ]);
 
-      if (!response.ok) {
-        throw new Error('Unable to load inbox.');
-      }
+      const combinedEmails = [...infoEmails, ...bookingsEmails].sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+      );
 
-      const data = await response.json();
-
-      setEmails(data.emails || []);
+      setEmails(combinedEmails);
     } catch (err) {
       console.error('Inbox error:', err);
-      setError('Unable to load inbox emails.');
+
+      setError(err?.message || 'Unable to load inbox emails.');
     } finally {
       setLoading(false);
     }
@@ -42,43 +84,49 @@ LOAD INBOX
   }, []);
 
   /* =========================================================
-FILTER EMAILS
-========================================================= */
+     FILTER EMAILS
+  ========================================================= */
 
   const filteredEmails = useMemo(() => {
-    return emails.filter((email) => {
-      const searchText = search.toLowerCase();
+    const searchText = search.trim().toLowerCase();
 
+    return emails.filter((email) => {
       const matchesSearch =
-        !search ||
+        !searchText ||
         email.name?.toLowerCase().includes(searchText) ||
         email.email?.toLowerCase().includes(searchText) ||
         email.subject?.toLowerCase().includes(searchText) ||
         email.message?.toLowerCase().includes(searchText);
 
-      const matchesFilter =
-        filter === 'all' ||
-        (filter === 'unread' && email.status === 'unread') ||
-        (filter === 'read' && email.status === 'read') ||
-        (filter === 'attachments' && email.attachments && email.attachments.length > 0);
+      let matchesFilter = true;
+
+      if (filter === 'unread') {
+        matchesFilter = email.status === 'unread';
+      }
+
+      if (filter === 'read') {
+        matchesFilter = email.status === 'read';
+      }
+
+      if (filter === 'attachments') {
+        matchesFilter = email.attachments.length > 0;
+      }
 
       return matchesSearch && matchesFilter;
     });
   }, [emails, search, filter]);
 
   /* =========================================================
-STATISTICS
-========================================================= */
+     STATISTICS
+  ========================================================= */
 
   const unreadCount = emails.filter((email) => email.status === 'unread').length;
 
-  const attachmentCount = emails.filter(
-    (email) => email.attachments && email.attachments.length > 0
-  ).length;
+  const attachmentCount = emails.filter((email) => email.attachments.length > 0).length;
 
   /* =========================================================
-DATE FORMAT
-========================================================= */
+     DATE FORMAT
+  ========================================================= */
 
   const formatDate = (date) => {
     if (!date) return '-';
@@ -103,63 +151,69 @@ DATE FORMAT
   };
 
   /* =========================================================
-OPEN EMAIL
-========================================================= */
+     OPEN EMAIL
+  ========================================================= */
 
   const openEmail = async (email) => {
-    setSelectedEmail(email);
+    setSelectedEmail({
+      ...email,
+      status: 'read',
+    });
 
     if (email.status === 'unread') {
       setEmails((currentEmails) =>
-        currentEmails.map((item) => (item.id === email.id ? { ...item, status: 'read' } : item))
+        currentEmails.map((item) =>
+          item.id === email.id
+            ? {
+                ...item,
+                status: 'read',
+              }
+            : item
+        )
       );
 
-      setSelectedEmail({
-        email,
-        status: 'read',
-      });
-
       /*
-    Backend connection can be added later:
+        Real IMAP read-status update will be connected
+        here next.
 
-    await fetch(`${API_URL}/api/emails/${email.id}/read`, {
-      method: 'PATCH',
-    });
-  */
+        The important difference is that the backend
+        needs to know which mailbox the email belongs to.
+      */
     }
   };
 
   /* =========================================================
-CLOSE EMAIL
-========================================================= */
+     CLOSE EMAIL
+  ========================================================= */
 
   const closeEmail = () => {
     setSelectedEmail(null);
   };
 
   /* =========================================================
-LOADING
-========================================================= */
+     LOADING
+  ========================================================= */
 
   if (loading) {
     return (
       <div className="email-inbox-loading">
-        {' '}
         <div className="email-inbox-spinner"></div>
+
         <p>Loading inbox...</p>
       </div>
     );
   }
 
   /* =========================================================
-PAGE
-========================================================= */
+     PAGE
+  ========================================================= */
 
   return (
     <main className="email-inbox-page">
       {/* =====================================================
-      PAGE HEADER
+          PAGE HEADER
       ====================================================== */}
+
       <section className="email-inbox-header">
         <div>
           <span className="email-inbox-eyebrow">EMAILS</span>
@@ -173,9 +227,11 @@ PAGE
           ↻ Refresh
         </button>
       </section>
+
       {/* =====================================================
-      ERROR
+          ERROR
       ====================================================== */}
+
       {error && (
         <div className="email-inbox-error">
           <span>!</span>
@@ -183,15 +239,18 @@ PAGE
           <p>{error}</p>
         </div>
       )}
+
       {/* =====================================================
-      STATISTICS
+          STATISTICS
       ====================================================== */}
+
       <section className="email-inbox-stats">
         <div className="email-inbox-stat-card">
           <div className="email-inbox-stat-icon">✉</div>
 
           <div>
             <span>Total Emails</span>
+
             <strong>{emails.length}</strong>
           </div>
         </div>
@@ -201,6 +260,7 @@ PAGE
 
           <div>
             <span>Unread</span>
+
             <strong>{unreadCount}</strong>
           </div>
         </div>
@@ -210,13 +270,16 @@ PAGE
 
           <div>
             <span>With Attachments</span>
+
             <strong>{attachmentCount}</strong>
           </div>
         </div>
       </section>
+
       {/* =====================================================
-      INBOX PANEL
+          INBOX PANEL
       ====================================================== */}
+
       <section className="email-inbox-panel">
         {/* PANEL HEADER */}
 
@@ -234,7 +297,7 @@ PAGE
         </div>
 
         {/* =================================================
-        TOOLBAR
+            TOOLBAR
         ================================================== */}
 
         <div className="email-inbox-toolbar">
@@ -291,7 +354,7 @@ PAGE
         </div>
 
         {/* =================================================
-        EMAIL LIST
+            EMAIL LIST
         ================================================== */}
 
         {filteredEmails.length === 0 ? (
@@ -339,7 +402,7 @@ PAGE
                   <div className="email-inbox-item-meta">
                     <span>{email.email || '-'}</span>
 
-                    {email.attachments && email.attachments.length > 0 && (
+                    {email.attachments.length > 0 && (
                       <span className="email-inbox-attachment-count">
                         📎 {email.attachments.length}
                       </span>
@@ -359,9 +422,11 @@ PAGE
           </div>
         )}
       </section>
+
       {/* =====================================================
-      EMAIL MODAL
+          EMAIL MODAL
       ====================================================== */}
+
       {selectedEmail && (
         <div className="email-inbox-modal-overlay" onClick={closeEmail}>
           <div className="email-inbox-modal" onClick={(event) => event.stopPropagation()}>
@@ -392,6 +457,15 @@ PAGE
                 <a href={`mailto:${selectedEmail.email}`}>{selectedEmail.email || '-'}</a>
 
                 <span>{formatDateTime(selectedEmail.createdAt)}</span>
+
+                {/* MAILBOX */}
+
+                <span>
+                  To:{' '}
+                  {selectedEmail.mailbox === 'bookings'
+                    ? 'bookings@greensshuttle.co.za'
+                    : 'info@greensshuttle.co.za'}
+                </span>
               </div>
             </div>
 
@@ -410,7 +484,7 @@ PAGE
             <div className="email-inbox-attachments">
               <span className="email-inbox-panel-eyebrow">ATTACHMENTS</span>
 
-              {selectedEmail.attachments && selectedEmail.attachments.length > 0 ? (
+              {selectedEmail.attachments.length > 0 ? (
                 <div className="email-inbox-attachment-list">
                   {selectedEmail.attachments.map((attachment, index) => (
                     <a
