@@ -1,4 +1,4 @@
-import HeroSlideshow from '../components/HeroSlideshow';
+import HeroSlideshow from '../components/HeroSlideShow';
 import SectionTitle from '../components/SectionTitle';
 import ServiceCard from '../components/ServiceCard';
 import DestinationCard from '../components/DestinationCard';
