@@ -10,12 +10,12 @@ import emailRoutes from "./routes/emailRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 
-import { verifyEmailConnections } from "./services/emailService.js";
+// import { verifyEmailConnections } from "./services/emailService.js";
 import authMiddleware from "./middleware/authMiddleware.js";
 
 const app = express();
 
-const PORT = process.env.PORT || 5000;
+// const PORT = process.env.PORT || 5000;
 
 /* =========================================================
    MIDDLEWARE
@@ -64,27 +64,4 @@ app.use("/api/emails", authMiddleware, emailRoutes);
 
 app.use("/api/reviews", reviewRoutes);
 
-/* =========================================================
-   START SERVER
-========================================================= */
-
-app.listen(PORT, "0.0.0.0", async () => {
-  console.log("");
-  console.log("==========================================");
-  console.log("   GREENS SHUTTLE BACKEND");
-  console.log("==========================================");
-  console.log(`Server running on port ${PORT}`);
-  console.log("==========================================");
-  console.log("");
-
-  /* =======================================================
-     TEST EMAIL CONNECTIONS
-  ======================================================== */
-
-  try {
-    await verifyEmailConnections();
-  } catch (error) {
-    console.error("Email connection verification failed:");
-    console.error(error.message);
-  }
-});
+export default app;
