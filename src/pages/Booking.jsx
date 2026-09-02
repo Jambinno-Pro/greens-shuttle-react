@@ -453,11 +453,6 @@ export default function Booking() {
                 onChange={handleFileChange}
               />
 
-              <small className="journey-booking-file-help">
-                Upload your booking confirmation, payment confirmation, ticket or other relevant
-                document. Accepted files: PDF, JPG, JPEG, PNG and WEBP. Maximum file size: 10MB.
-              </small>
-
               {proofFile && (
                 <div className="journey-booking-selected-file">📎 {proofFile.name}</div>
               )}

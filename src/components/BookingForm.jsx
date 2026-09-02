@@ -281,8 +281,6 @@ export default function BookingForm() {
             />
 
             {proofFile && <small>Selected: {proofFile.name}</small>}
-
-            <small>PDF, JPG, JPEG, PNG or WEBP — maximum 10 MB.</small>
           </div>
 
           {/* =====================================================

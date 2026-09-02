@@ -6,6 +6,9 @@ const destinations = [
   'Hermanus',
   'Garden Route',
   'Cape Winelands',
+  'Worcester',
+  'Boland',
+  'Ceres',
 ];
 
 export default function DestinationMarquee() {

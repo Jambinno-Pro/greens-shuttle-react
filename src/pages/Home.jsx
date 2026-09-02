@@ -11,19 +11,6 @@ import { services, destinations } from '../data/siteData';
 import { Plane, Wine, Route, PawPrint, Car, CalendarDays } from 'lucide-react';
 
 /* =========================================================
-   SERVICE ICONS
-   ========================================================= */
-
-const serviceIcons = {
-  'Airport Transfers': Plane,
-  'Wine Tours': Wine,
-  'Garden Route': Route,
-  'Game Drives': PawPrint,
-  'Chauffeur Services': Car,
-  'Events Transfer': CalendarDays,
-};
-
-/* =========================================================
    HOME
    ========================================================= */
 
@@ -52,36 +39,22 @@ export default function Home() {
           SERVICES
       ====================================================== */}
 
+      {/* =====================================================
+    SERVICES
+====================================================== */}
+
       <section className="home-services section">
         <div className="container">
           <SectionTitle
             eyebrow="WHAT WE DO"
             title="Journeys Designed Around You"
-            text="From seamless airport transfers to unforgettable experiences, Greens Shuttle makes every journey comfortable and effortless."
+            text="From seamless airport transfers to unforgettable experiences, Greens Transport and Shuttle Services makes every journey comfortable and effortless."
           />
 
           <div className="services-grid">
-            {services.map((service) => {
-              const ServiceIcon = serviceIcons[service.title] || Car;
-
-              return (
-                <ServiceCard
-                  key={service.title}
-                  /* SERVICE ICON */
-                  icon={<ServiceIcon size={24} strokeWidth={2} />}
-                  /* SERVICE CONTENT */
-                  title={service.title}
-                  description={service.description}
-                  /* SERVICE FEATURES */
-                  items={service.features || []}
-                  /* SERVICE IMAGE */
-                  image={service.image}
-                  /* BUTTON */
-                  link="/contact"
-                  linkText="Book This Service"
-                />
-              );
-            })}
+            {services.map((service) => (
+              <ServiceCard key={service.title} service={service} />
+            ))}
           </div>
         </div>
       </section>
@@ -105,8 +78,8 @@ export default function Home() {
           </h2>
 
           <p>
-            Greens Shuttle provides reliable private transportation and carefully curated travel
-            experiences across Cape Town and South Africa.
+            Greens Transport and Shuttle Services provides reliable private transportation and
+            carefully curated travel experiences across Cape Town and South Africa.
           </p>
 
           <p>
@@ -148,7 +121,7 @@ export default function Home() {
           <SectionTitle
             eyebrow="DESTINATIONS"
             title="Discover South Africa"
-            text="From the vibrant streets of Cape Town to the scenic Winelands, breathtaking coastlines and unforgettable Garden Route, discover South Africa in comfort and style. Let Greens Shuttle take you there with reliable private transportation and journeys designed around you."
+            text="From the vibrant streets of Cape Town to the scenic Winelands, breathtaking coastlines and unforgettable Garden Route, discover South Africa in comfort and style. Let Greens Transport and Shuttle take you there with reliable private transportation and journeys designed around you."
           />
 
           <div className="destinations-grid">

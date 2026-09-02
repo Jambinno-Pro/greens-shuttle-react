@@ -679,11 +679,6 @@ export default function About() {
                   onChange={handleFileChange}
                 />
 
-                <small className="about-file-help">
-                  Upload your booking confirmation, payment confirmation, ticket or other relevant
-                  document. Accepted files: PDF, JPG, JPEG, PNG and WEBP.
-                </small>
-
                 {proofFile && <div className="about-selected-file">📎 {proofFile.name}</div>}
               </div>
 

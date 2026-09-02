@@ -78,7 +78,8 @@ export default function HeroSlideshow() {
           </h1>
 
           <p>
-            Private transfers, tours and unforgettable journeys across Cape Town and South Africa.
+            Our core service areas include Paarl, Franschhoek, Ceres, Worcester and the broader
+            Boland region, with flexible coverage across Cape Town and surrounding areas.
           </p>
 
           <div className="hero-actions">
