@@ -19,3 +19,4 @@ backend/local.js
 # Logs
 *.log
 npm-debug.log*
+.vercel
